@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+
+export prefix=/usr
+
+build: build-stamp
+install: build install-stamp
+
+build-stamp install-stamp:
+	dh ${@:-stamp=}
+	touch $@
+
+binary-arch binary-indep: install
+	dh $@
+
+binary: binary-arch binary-indep
+
+clean:
+	dh $@
+
+.PHONY: build clean install binary-indep binary-arch binary 

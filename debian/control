@@ -1,0 +1,14 @@
+Source: rt-tests
+Section: misc
+Priority: extra
+Maintainer: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+Standards-Version: 3.8.1
+Build-Depends: debhelper (>= 7)
+
+Package: rt-tests
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Test programs for rt kernels
+ rt-tests contains a set of programs that test and measure various components
+ of "realtime" kernel behavior, such as timer latency, signal latency and the
+ functioning of priority-inheritance mutexes.

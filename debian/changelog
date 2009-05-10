@@ -1,0 +1,5 @@
+rt-tests (0.39-1~~ukl1) UNRELEASED; urgency=low
+
+  * Initial release. (Closes: #521895)
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Wed, 06 May 2009 21:22:28 +0200

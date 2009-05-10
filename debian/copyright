@@ -1,0 +1,26 @@
+This package was debianized by Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+on Mon, 30 Apr 2009 11:46:37 +0200
+
+The .orig.tar.gz was downloaded from
+
+	http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests/
+
+With the exceptions given below, rt-test is copyrighted under GNU General
+Public License Version 2 (GPL v2)
+
+The following files allow using a later version of the GPL:
+ - src/pi_tests/classic_pi.c
+ - src/pi_tests/sigtest.c
+ - src/pi_tests/pi_stress.c
+
+src/pi_tests/tst-mutexpi10.c is copyrighted under GNU Lesser General Public
+License Version 2.1 (LGPL v2.1) or later.
+
+The Debian packaging is
+Copyright (C) 2009, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+and licensed under GPLv2.
+
+You should have received a copy of the GNU General Public License and the GNU
+Lesser General Public License with your Debian GNU/Linux system, in
+/usr/share/common-licenses/GPL-2 and /usr/share/common-licenses/LGPL-2.1
+respectively.
