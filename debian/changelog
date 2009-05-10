@@ -1,3 +1,9 @@
+rt-tests (0.39-2) UNRELEASED; urgency=low
+
+  * add VCS URL to control
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 11 May 2009 00:18:37 +0200
+
 rt-tests (0.39-1) unstable; urgency=low
 
   * Initial release. (Closes: #521895)
