@@ -1,4 +1,4 @@
-rt-tests (0.39-1~~ukl1) UNRELEASED; urgency=low
+rt-tests (0.39-1) unstable; urgency=low
 
   * Initial release. (Closes: #521895)
 
