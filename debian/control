@@ -9,7 +9,7 @@ Vcs-Git: git://git.pengutronix.de/git/ukl/rt-tests.git
 
 Package: rt-tests
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, python
 Description: Test programs for rt kernels
  rt-tests contains a set of programs that test and measure various components
  of "realtime" kernel behavior, such as timer latency, signal latency and the
