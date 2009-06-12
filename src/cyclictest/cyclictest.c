@@ -179,7 +179,7 @@ static char functiontracer[MAX_PATH];
 static char traceroptions[MAX_PATH];
 
 /*
- * Finds the path to the debugfs/tracing
+ * Finds the tracing directory in a mounted debugfs
  */
 static int set_debugfileprefix(void)
 {
@@ -287,18 +287,18 @@ static inline void tsnorm(struct timespec *ts)
 	}
 }
 
-static inline long calcdiff(struct timespec t1, struct timespec t2)
+static inline long long calcdiff(struct timespec t1, struct timespec t2)
 {
-	long diff;
-	diff = USEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
+	long long diff;
+	diff = USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
 	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
 	return diff;
 }
 
-static inline long calcdiff_ns(struct timespec t1, struct timespec t2)
+static inline long long calcdiff_ns(struct timespec t1, struct timespec t2)
 {
-	long diff;
-	diff = NSEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
+	long long diff;
+	diff = NSEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
 	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
 	return diff;
 }
