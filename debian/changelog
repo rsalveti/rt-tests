@@ -1,4 +1,4 @@
-rt-tests (0.39-2) UNRELEASED; urgency=low
+rt-tests (0.39-2) unstable; urgency=low
 
   * add VCS URL to control
   * conflict with xenomai-runtime (Closes: #529783)
