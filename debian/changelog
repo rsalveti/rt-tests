@@ -2,6 +2,11 @@ rt-tests (0.40-1) UNRELEASED; urgency=low
 
   * new upstream release
   * add dependency on python for smidetect
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 11 May 2009 00:18:37 +0200
+
+rt-tests (0.39-2) unstable; urgency=low
+
   * add VCS URL to control
   * conflict with xenomai-runtime (Closes: #529783)
 
