@@ -1,9 +1,9 @@
-rt-tests (0.40-1) UNRELEASED; urgency=low
+rt-tests (0.43-1) UNRELEASED; urgency=low
 
   * new upstream release
-  * add dependency on python for smidetect
+  * add dependency on python for hwlatdetect
 
- -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 11 May 2009 00:18:37 +0200
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 29 Jun 2009 21:35:49 +0200
 
 rt-tests (0.39-2) unstable; urgency=low
 
