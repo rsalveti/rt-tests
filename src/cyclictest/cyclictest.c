@@ -630,7 +630,7 @@ void *timerthread(void *param)
 	while (!shutdown) {
 
 		long diff;
-		int sigs;
+		int sigs, ret;
 
 		/* Wait for next period */
 		switch (par->mode) {
@@ -641,17 +641,24 @@ void *timerthread(void *param)
 			break;
 
 		case MODE_CLOCK_NANOSLEEP:
-			if (par->timermode == TIMER_ABSTIME)
-				clock_nanosleep(par->clock, TIMER_ABSTIME,
+			if (par->timermode == TIMER_ABSTIME) {
+				ret = clock_nanosleep(par->clock, TIMER_ABSTIME,
 						&next, NULL);
-			else {
+			} else {
 				clock_gettime(par->clock, &now);
-				clock_nanosleep(par->clock, TIMER_RELTIME,
+				ret = clock_nanosleep(par->clock, TIMER_RELTIME,
 						&interval, NULL);
 				next.tv_sec = now.tv_sec + interval.tv_sec;
 				next.tv_nsec = now.tv_nsec + interval.tv_nsec;
 				tsnorm(&next);
 			}
+
+			/* Avoid negative calcdiff result if clock_nanosleep() 
+			 * gets interrupted.
+			 */
+			if (ret == EINTR)
+				goto out;
+
 			break;
 
 		case MODE_SYS_NANOSLEEP:
@@ -996,7 +1003,7 @@ static void print_hist(struct thread_param *par, int nthreads)
 	printf("# Histogram\n");
 	for (i = 0; i < histogram; i++) {
 
-		printf("%05d ", i);
+		printf("%06d ", i);
 
 		for (j = 0; j < nthreads; j++) {
 			unsigned long curr_latency=par[j].stats->hist_array[i];
