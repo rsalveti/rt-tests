@@ -33,6 +33,13 @@
 #include <sys/utsname.h>
 #include <sys/mman.h>
 
+#ifndef SCHED_IDLE
+#define SCHED_IDLE 5
+#endif
+#ifndef SCHED_NORMAL
+#define SCHED_NORMAL SCHED_OTHER
+#endif
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /* Ugly, but .... */
@@ -72,6 +79,8 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
 #define USEC_PER_SEC		1000000
 #define NSEC_PER_SEC		1000000000
 
+#define HIST_MAX		1000000
+
 #define MODE_CYCLIC		0
 #define MODE_CLOCK_NANOSLEEP	1
 #define MODE_SYS_ITIMER		2
@@ -98,11 +107,10 @@ enum {
 	WAKEUPRT,
 };
 
-#define HIST_MAX		1000000
-
 /* Struct to transfer parameters to the thread */
 struct thread_param {
 	int prio;
+	int policy;
 	int mode;
 	int timermode;
 	int signal;
@@ -141,6 +149,7 @@ static int oscope_reduction = 1;
 static int lockall = 0;
 static int tracetype = NOTRACE;
 static int histogram = 0;
+static int histogram_limit_exceeded = 0;
 static int duration = 0;
 static int use_nsecs = 0;
 
@@ -563,7 +572,6 @@ void *timerthread(void *param)
 	struct itimerval itimer;
 	struct itimerspec tspec;
 	struct thread_stat *stat = par->stats;
-	int policy = par->prio ? SCHED_FIFO : SCHED_OTHER;
 	int stopped = 0;
 	cpu_set_t mask;
 
@@ -594,7 +602,7 @@ void *timerthread(void *param)
 
 	memset(&schedp, 0, sizeof(schedp));
 	schedp.sched_priority = par->prio;
-	sched_setscheduler(0, policy, &schedp);
+	sched_setscheduler(0, par->policy, &schedp);
 
 	/* Get current time */
 	clock_gettime(par->clock, &now);
@@ -695,7 +703,16 @@ void *timerthread(void *param)
 		if (par->bufmsk)
 			stat->values[stat->cycles & par->bufmsk] = diff;
 
-		if (histogram && (diff < histogram))
+		/* When histogram limit got exceed, mark limit as exceeded,
+		 * and use last bucket to recored samples of, exceeding 
+		 * latency spikes.
+		 */
+		if (histogram && diff >= histogram) {
+			histogram_limit_exceeded = 1;
+			diff = histogram - 1;
+		}
+
+		if (histogram)
 			stat->hist_array[diff] += 1;
 
 		next.tv_sec += interval.tv_sec;
@@ -729,7 +746,7 @@ out:
 
 
 /* Print usage information */
-static void display_help(void)
+static void display_help(int error)
 {
 	char tracers[MAX_PATH];
 
@@ -753,8 +770,14 @@ static void display_help(void)
 	       "                           1 = CLOCK_REALTIME\n"
 	       "-C       --context         context switch tracing (used with -b)\n"
 	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+	       "-D       --duration=t      specify a length for the test run\n"
+	       "                           default is in seconds, but 'm', 'h', or 'd' maybe added\n"
+	       "                           to modify value to minutes, hours or days\n"
 	       "-E       --event           event tracing (used with -b)\n"
 	       "-f       --ftrace          function trace (when -b is active)\n"
+	       "-h       --histogram=US    dump a latency histogram to stdout after the run\n"
+               "                           (with same priority about many threads)\n"
+	       "                           US is the max time to be be tracked in microseconds\n"
 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
 	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
@@ -762,29 +785,28 @@ static void display_help(void)
 	       "-n       --nanosleep       use clock_nanosleep\n"
 	       "-N       --nsecs           print results in ns instead of ms (default ms)\n"
 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
-	       "-O TOPT  --traceopt=TOPT    trace option\n"
+	       "-O TOPT  --traceopt=TOPT   trace option\n"
 	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
 	       "-P       --preemptoff      Preempt off tracing (used with -b)\n"
 	       "-q       --quiet           print only a summary on exit\n"
 	       "-r       --relative        use relative timer instead of absolute\n"
 	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
-	       "-T TRACE --tracer=TRACER   set tracing function\n"
-	       "    configured tracers: %s\n"
 	       "-t       --threads         one thread per available processor\n"
 	       "-t [NUM] --threads=NUM     number of threads:\n"
 	       "                           without NUM, threads = max_cpus\n"
 	       "                           without -t default = 1\n"
+	       "-T TRACE --tracer=TRACER   set tracing function\n"
+	       "    configured tracers: %s\n"
 	       "-v       --verbose         output values on stdout for statistics\n"
 	       "                           format: n:c:v n=tasknum c=count v=value in us\n"
-	       "-D       --duration=t      specify a length for the test run\n"
-	       "                           default is in seconds, but 'm', 'h', or 'd' maybe added\n"
-	       "                           to modify value to minutes, hours or days\n"
-	       "-h       --histogram=US    dump a latency histogram to stdout after the run\n"
-	       "                           US is the max time to be be tracked in microseconds\n"
                "-w       --wakeup          task wakeup tracing (used with -b)\n"
-               "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n",
+               "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n"
+               "-y POLI  --policy=POLI     policy of realtime thread (1:FIFO, 2:RR)\n"
+               "                           format: --policy=fifo(default) or --policy=rr\n",
 	       tracers
 		);
+	if (error)
+		exit(-1);
 	exit(0);
 }
 
@@ -792,6 +814,7 @@ static int use_nanosleep;
 static int timermode = TIMER_ABSTIME;
 static int use_system;
 static int priority;
+static int policy = 0;
 static int num_threads = 1;
 static int max_cycles;
 static int clocksel = 0;
@@ -811,6 +834,52 @@ static int clocksources[] = {
 	CLOCK_MONOTONIC,
 	CLOCK_REALTIME,
 };
+
+static void handlepolicy(char *polname)
+{
+	if (strncasecmp(polname, "other", 5) == 0)
+		policy = SCHED_OTHER;
+	else if (strncasecmp(polname, "batch", 5) == 0)
+		policy = SCHED_BATCH;
+	else if (strncasecmp(polname, "idle", 4) == 0)
+		policy = SCHED_IDLE;
+	else if (strncasecmp(polname, "fifo", 4) == 0)
+		policy = SCHED_FIFO;
+	else if (strncasecmp(polname, "rr", 2) == 0)
+		policy = SCHED_RR;
+
+	if (policy == SCHED_FIFO || policy == SCHED_RR) {
+		if (policy == 0)
+			policy = 1;
+	}
+	else 
+		policy = 0;
+}
+
+static char *policyname(int policy)
+{
+	char *policystr = "";
+
+	switch(policy) {
+	case SCHED_OTHER:
+		policystr = "other";
+		break;
+	case SCHED_FIFO:
+		policystr = "fifo";
+		break;
+	case SCHED_RR:
+		policystr = "rr";
+		break;
+	case SCHED_BATCH:
+		policystr = "batch";
+		break;
+	case SCHED_IDLE:
+		policystr = "idle";
+		break;
+	}
+	return policystr;
+}
+
 
 /* Process commandline options */
 static void process_options (int argc, char *argv[])
@@ -839,6 +908,7 @@ static void process_options (int argc, char *argv[])
 			{"nsecs", no_argument, NULL, 'N'},
 			{"oscope", required_argument, NULL, 'o'},
 			{"priority", required_argument, NULL, 'p'},
+                        {"policy", required_argument, NULL, 'y'},
 			{"preemptoff", no_argument, NULL, 'P'},
 			{"quiet", no_argument, NULL, 'q'},
 			{"relative", no_argument, NULL, 'r'},
@@ -853,7 +923,7 @@ static void process_options (int argc, char *argv[])
 			{"traceopt", required_argument, NULL, 'O'},
 			{NULL, 0, NULL, 0}
 		};
-		int c = getopt_long (argc, argv, "a::b:Bc:Cd:Efh:i:Il:nNo:O:p:Pmqrst::vD:wWT:",
+                int c = getopt_long (argc, argv, "a::b:Bc:Cd:Efh:i:Il:nNo:O:p:Pmqrst::vD:wWTy:",
 			long_options, &option_index);
 		if (c == -1)
 			break;
@@ -884,7 +954,11 @@ static void process_options (int argc, char *argv[])
 		case 'N': use_nsecs = 1; break;
 		case 'o': oscope_reduction = atoi(optarg); break;
 		case 'O': traceopt(optarg); break;
-		case 'p': priority = atoi(optarg); break;
+		case 'p': 
+			priority = atoi(optarg); 
+			if (policy != SCHED_FIFO && policy != SCHED_RR)
+				policy = SCHED_FIFO;
+			break;
 		case 'P': tracetype = PREEMPTOFF; break;
 		case 'q': quiet = 1; break;
 		case 'r': timermode = TIMER_RELTIME; break;
@@ -904,7 +978,8 @@ static void process_options (int argc, char *argv[])
 			break;
                 case 'w': tracetype = WAKEUP; break;
                 case 'W': tracetype = WAKEUPRT; break;
-		case '?': error = 1; break;
+                case 'y': handlepolicy(optarg); break;
+		case '?': display_help(0); break;
 		}
 	}
 
@@ -933,14 +1008,29 @@ static void process_options (int argc, char *argv[])
 	if (histogram < 0)
 		error = 1;
 
+	if (histogram > HIST_MAX)
+		histogram = HIST_MAX;
+
 	if (priority < 0 || priority > 99)
 		error = 1;
+
+	if (priority && (policy != SCHED_FIFO && policy != SCHED_RR)) {
+		fprintf(stderr, "policy and priority don't match: setting policy to SCHED_FIFO\n");
+		policy = SCHED_FIFO;
+	}
+
+	if ((policy == SCHED_FIFO || policy == SCHED_RR) && priority == 0) {
+		fprintf(stderr, "defaulting realtime priority to %d\n", 
+			num_threads+1);
+		priority = num_threads+1;
+	}
 
 	if (num_threads < 1)
 		error = 1;
 
+
 	if (error)
-		display_help ();
+		display_help(1);
 }
 
 static int check_kernel(void)
@@ -1029,13 +1119,13 @@ static void print_stat(struct thread_param *par, int index, int verbose)
 		if (quiet != 1) {
 			char *fmt;
 			if (use_nsecs)
-				fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
+                                fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
 					"Min:%7ld Act:%8ld Avg:%8ld Max:%8ld\n";
 			else
-				fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
+                                fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
 					"Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n";
-			printf(fmt, index, stat->tid, par->prio, par->interval,
-			       stat->cycles, stat->min, stat->act,
+                        printf(fmt, index, stat->tid, par->prio, 
+                               par->interval, stat->cycles, stat->min, stat->act,
 			       stat->cycles ?
 			       (long)(stat->avg/stat->cycles) : 0, stat->max);
 		}
@@ -1095,10 +1185,10 @@ int main(int argc, char **argv)
 	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
 	int i, ret = -1;
 
+	process_options(argc, argv);
+
 	if (check_privs())
 		exit(-1);
-
-	process_options(argc, argv);
 
 	/* lock all memory (prevent paging) */
 	if (lockall)
@@ -1135,9 +1225,12 @@ int main(int argc, char **argv)
 
 	for (i = 0; i < num_threads; i++) {
 		if (histogram) {
-			if (histogram > HIST_MAX)
-				histogram = HIST_MAX;
 			stat[i].hist_array = calloc(histogram, sizeof(long));
+			if (!stat[i].hist_array) {
+				fprintf(stderr, "Cannot allocate enough memory for histogram limit %d: %s",
+						histogram, strerror(errno));
+				exit(EXIT_FAILURE);
+			}
 		}
 
 		if (verbose) {
@@ -1150,6 +1243,9 @@ int main(int argc, char **argv)
 		par[i].prio = priority;
 		if (priority && !histogram)
 			priority--;
+                if      (priority && policy <= 1) par[i].policy = SCHED_FIFO;
+                else if (priority && policy == 2) par[i].policy = SCHED_RR;
+                else                              par[i].policy = SCHED_OTHER;
 		par[i].clock = clocksources[clocksel];
 		par[i].mode = mode;
 		par[i].timermode = timermode;
@@ -1176,13 +1272,18 @@ int main(int argc, char **argv)
 	while (!shutdown) {
 		char lavg[256];
 		int fd, len, allstopped = 0;
+		char *policystr = NULL;
+
+		if (!policystr)
+			policystr = policyname(policy);
 
 		if (!verbose && !quiet) {
 			fd = open("/proc/loadavg", O_RDONLY, 0666);
 			len = read(fd, &lavg, 255);
 			close(fd);
 			lavg[len-1] = 0x0;
-			printf("%s          \n\n", lavg);
+			printf("policy: %s: loadavg: %s          \n\n", 
+			       policystr, lavg);
 		}
 
 		for (i = 0; i < num_threads; i++) {
@@ -1198,7 +1299,8 @@ int main(int argc, char **argv)
 		if (!verbose && !quiet)
 			printf("\033[%dA", num_threads + 2);
 	}
-	ret = 0;
+	ret = EXIT_SUCCESS;
+
  outall:
 	shutdown = 1;
 	usleep(50000);
@@ -1238,6 +1340,13 @@ int main(int argc, char **argv)
 	/* Be a nice program, cleanup */
 	if (kernelversion != KV_26_CURR)
 		restorekernvars();
+
+	if (histogram && histogram_limit_exceeded) {
+		ret = EXIT_FAILURE;
+		fprintf(stderr, "ERROR: Histogram limit got exceeded at least once!\n"
+				"Limit exceeding got sampled in last bucket.\n");
+
+	}
 
 	exit(ret);
 }

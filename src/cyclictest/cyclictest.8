@@ -18,7 +18,7 @@ cyclictest \- High resolution test program
 .B cyclictest
 .RI "[ \-hfmnqrsv ] [\-a " proc " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
 [\-h " histogram " ] [\-i " intv " ] [\-l " loop " ] [\-o " red " ] [\-p " prio " ] \
-[\-t " num " ] [\-D " time "] [\-w] [\-W]
+[\-t " num " ] [\-D " time "] [\-w] [\-W] [\-y " policy "]"
 
 .\" .SH DESCRIPTION
 .\" This manual page documents briefly the
@@ -91,7 +91,7 @@ event tracing (used with \-b)
 Enable function tracing using ftrace as tracer. This option is available only with \-b.
 .TP
 .B \-h, \-\-histogram=MAXLATENCYINUS
-Dump latency histogram to stdout
+Dump latency histogram to stdout. US means the max time to be be tracked in microseconds. When you use -h option to get histogram data, Cyclictest runs many threads with same priority without priority--.
 .TP
 .B \-i, \-\-interval=INTV
 Set the base interval of the thread(s) in microseconds (default is 1000us). This sets the interval of the first thread. See also \-d.
@@ -151,6 +151,13 @@ task wakeup tracing (used with \-b)
 .TP
 .B \\-W, \-\-wakeuprt
 rt-task wakeup tracing (used with \-b)
+.TP
+.B \\-y, \-\-policy
+set the scheduler policy of the measurement threads 
+
+format: --policy=<name> 
+
+where name is one of: other,normal,batch,idle,fifo,rr
 .\" .SH SEE ALSO
 .\" .BR bar (1),
 .\" .BR baz (1).
