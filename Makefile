@@ -1,4 +1,4 @@
-VERSION_STRING = 0.50
+VERSION_STRING = 0.51
 
 TARGETS	= cyclictest signaltest classic_pi pi_stress hwlatdetect
 FLAGS	= -Wall -Wno-nonnull -O2
@@ -56,6 +56,9 @@ release: clean changelog
 
 push:	release
 	scripts/do-git-push $(VERSION_STRING)
+
+pushtest: release
+	scripts/do-git-push --test $(VERSION_STRING)
 
 rt-tests.spec: Makefile rt-tests.spec-in
 	sed s/__VERSION__/$(VERSION_STRING)/ <$@-in >$@
