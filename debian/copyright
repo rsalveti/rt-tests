@@ -1,26 +1,36 @@
-This package was debianized by Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
-on Mon, 30 Apr 2009 11:46:37 +0200
+Name: rt-tests
+Maintainer: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+Source: http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests/
 
-The .orig.tar.gz was downloaded from
+Files: debian/*
+Copyright: (C) 2009, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+License: GPL-2
 
-	http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests/
+Files: src/cyclictest/cyclictest.c
+Copyright: (C) 2008-2009 Clark Williams <williams@redhat.com>
+	   (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
+License: GPL-2
 
-With the exceptions given below, rt-tests is copyrighted under GNU General
-Public License Version 2 (GPL v2)
+Files: src/pi_tests/*.c
+Copyright: (C) 2006, 2007 Clark Williams <williams@redhat.com>
+License: GPL-2+
 
-The following files allow using a later version of the GPL:
- - src/pi_tests/classic_pi.c
- - src/pi_tests/sigtest.c
- - src/pi_tests/pi_stress.c
+Files: src/pi_tests/tst-mutexpi10.c
+Copyright: (C) 2006 Free Software Foundation, Inc.
+License: LGPL-2.1+
 
-src/pi_tests/tst-mutexpi10.c is copyrighted under GNU Lesser General Public
-License Version 2.1 (LGPL v2.1) or later.
+Files: src/signaltest/signaltest.c
+Copyright: (C) 2007 Thomas Gleixner <tglx@linutronix.de>
+License: GPL-2
 
-The Debian packaging is
-Copyright (C) 2009, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
-and licensed under GPLv2.
+Files: src/hwlatdetect/hwlatdetect.py
+Copyright: (C) 2009 Clark Williams <williams@redhat.com>
+License: GPL-2
 
-You should have received a copy of the GNU General Public License and the GNU
-Lesser General Public License with your Debian GNU/Linux system, in
-/usr/share/common-licenses/GPL-2 and /usr/share/common-licenses/LGPL-2.1
-respectively.
+License: GPL-2
+  The full text of the GPL can be found in /usr/share/common-licenses/GPL-2 on
+  Debian systems.
+
+License: LGPL-2.1+
+  The full test of the LGPL can be found in /usr/share/common-licenses/LGPL-2.1
+  on Debian systems.
