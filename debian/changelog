@@ -2,6 +2,7 @@ rt-tests (0.51-1) UNRELEASED; urgency=low
 
   * reformat copyright and add authors and years of the copyright
   * new upstream release
+  * Standards-Version: 3.8.3 (no changes needed)
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Sat, 19 Sep 2009 16:13:51 +0200
 

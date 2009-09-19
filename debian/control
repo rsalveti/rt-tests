@@ -2,7 +2,7 @@ Source: rt-tests
 Section: misc
 Priority: extra
 Maintainer: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
-Standards-Version: 3.8.2
+Standards-Version: 3.8.3
 Build-Depends: debhelper (>= 7)
 Vcs-Browser: http://git.pengutronix.de/?p=ukl/rt-tests.git;
 Vcs-Git: git://git.pengutronix.de/git/ukl/rt-tests.git
