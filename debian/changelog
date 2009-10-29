@@ -1,6 +1,7 @@
 rt-tests (0.53-1) UNRELEASED; urgency=low
 
   * new upstream release
+  * only build on Linux archs but not hppa (see #534352)
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Thu, 29 Oct 2009 21:23:10 +0100
 
