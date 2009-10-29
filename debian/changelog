@@ -1,4 +1,4 @@
-rt-tests (0.53-1) UNRELEASED; urgency=low
+rt-tests (0.53-1) unstable; urgency=low
 
   * new upstream release
   * only build on Linux archs but not hppa (see #534352)
