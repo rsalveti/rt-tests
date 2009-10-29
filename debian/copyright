@@ -23,6 +23,10 @@ Files: src/pi_tests/tst-mutexpi10.c
 Copyright: (C) 2006 Free Software Foundation, Inc.
 License: LGPL-2.1+
 
+Files: src/rt-migrate-test/rt-migrate-test.c
+Copyright: (C) 2007-2009 Steven Rostedt <srostedt@redhat.com>
+License: GPL-2
+
 Files: src/signaltest/signaltest.c
 Copyright: (C) 2007 Thomas Gleixner <tglx@linutronix.de>
 License: GPL-2
