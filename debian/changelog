@@ -1,3 +1,9 @@
+rt-tests (0.53-1) UNRELEASED; urgency=low
+
+  * new upstream release
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Thu, 29 Oct 2009 21:23:10 +0100
+
 rt-tests (0.51-1) unstable; urgency=low
 
   * reformat copyright and add authors and years of the copyright
