@@ -2,6 +2,7 @@
 .*
 *.o
 *.tar.gz
+*.d
 tmp
 patches
 ChangeLog
@@ -18,3 +19,8 @@ hwlatdetect
 tags
 TAGS
 rt-migrate-test
+ptsematest
+sendme
+sigwaittest
+svsematest
+pip

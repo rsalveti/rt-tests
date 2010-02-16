@@ -27,6 +27,8 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 
+#include "rt-utils.h"
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /* Ugly, but .... */
@@ -235,6 +237,7 @@ static void process_options (int argc, char *argv[])
 			{"quiet", no_argument, NULL, 'q'},
 			{"threads", required_argument, NULL, 't'},
 			{"verbose", no_argument, NULL, 'v'},
+			{"mlockall", no_argument, NULL, 'm'},
 			{"help", no_argument, NULL, '?'},
 			{NULL, 0, NULL, 0}
 		};
@@ -304,31 +307,6 @@ static void print_stat(struct thread_param *par, int index, int verbose)
 			stat->cyclesread++;
 		}
 	}
-}
-
-static int
-check_privs(void)
-{
-	int policy = sched_getscheduler(0);
-	struct sched_param param;
-
-	/* if we're already running a realtime scheduler
-	 * then we *should* be able to change things later
-	 */
-	if (policy == SCHED_FIFO || policy == SCHED_RR)
-		return 0;
-
-	/* try to change to SCHED_FIFO */
-	param.sched_priority = 1;
-	if (sched_setscheduler(0, SCHED_FIFO, &param)) {
-		fprintf(stderr, "Unable to change scheduling policy!\n");
-		fprintf(stderr, "either run as root or join realtime group\n");
-		return 1;
-	}
-
-	/* we're good; change back and return success */
-	sched_setscheduler(0, policy, NULL);
-	return 0;
 }
 
 int main(int argc, char **argv)
