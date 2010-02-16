@@ -10,18 +10,55 @@ Files: scripts/*
 Copyright: (C) 2009 Clark Williams <williams@redhat.com>
 License: GPL-2
 
+Files: src/backfire/backfire.c
+Copyright: (C) 2007  Carsten Emde <C.Emde@osadl.org>
+License: GPL-2+
+
+Files: src/backfire/sendme.c
+Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+License: GPL-2+
+
 Files: src/cyclictest/cyclictest.c
 Copyright: (C) 2008-2009 Clark Williams <williams@redhat.com>
 	   (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
 License: GPL-2
 
-Files: src/pi_tests/*.c
+Files: src/cyclictest/rt_numa.h
+Copyright: (C) 2010 John Kacur <jkacur@redhat.com>
+	   (C) 2010 Clark Williams <williams@redhat.com>
+Licence: GPL-2
+
+Files: src/hwlatdetect/hwlatdetect.py
+Copyright: (C) 2009 Clark Williams <williams@redhat.com>
+License: GPL-2
+
+Files: src/lib/error.c
+Files: src/lib/rt-get_cpu.c
+Copyright: (C) 2009 John Kacur <jkacur@redhat.com>
+Licence: GPL-2
+
+Files: src/lib/rt-utils.c
+Copyright: (C) 2009 Carsten Emde <carsten.emde@osadl.org>
+	   (C) 2008-2010 Clark Williams <williams@redhat.com>
+	   (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
+Licence: GPL-2
+
+Files: src/pi_tests/pip.c
+Copyright: (C) 2009 John Kacur <jkacur@redhat.com>
+Licence: GPL-2+
+
+Files: src/pi_tests/pi_stress.c
+Files: src/pi_tests/sigtest.c
 Copyright: (C) 2006, 2007 Clark Williams <williams@redhat.com>
 License: GPL-2+
 
 Files: src/pi_tests/tst-mutexpi10.c
 Copyright: (C) 2006 Free Software Foundation, Inc.
 License: LGPL-2.1+
+
+Files: src/ptsematest/ptsematest.c
+Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+License: GPL-2+
 
 Files: src/rt-migrate-test/rt-migrate-test.c
 Copyright: (C) 2007-2009 Steven Rostedt <srostedt@redhat.com>
@@ -31,9 +68,13 @@ Files: src/signaltest/signaltest.c
 Copyright: (C) 2007 Thomas Gleixner <tglx@linutronix.de>
 License: GPL-2
 
-Files: src/hwlatdetect/hwlatdetect.py
-Copyright: (C) 2009 Clark Williams <williams@redhat.com>
-License: GPL-2
+Files: src/sigwaittest/sigwaittest.c
+Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+License: GPL-2+
+
+Files: src/svsematest/svsematest.c
+Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+License: GPL-2+
 
 License: GPL-2
   The full text of the GPL can be found in /usr/share/common-licenses/GPL-2 on
