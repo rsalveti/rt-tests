@@ -3,6 +3,7 @@ rt-tests (0.66-1) UNRELEASED; urgency=low
   * add sh4 to architecture list (Closes: #555554)
   * new upstream release
   * Standards-Version: 3.8.4 (no changes needed)
+  * Switch to dpkg-source 3.0 (quilt) format
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Tue, 16 Feb 2010 21:00:49 +0100
 
