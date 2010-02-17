@@ -2,6 +2,10 @@
 
 export prefix=/usr
 
+ifneq (,$(findstring $(DEB_BUILD_ARCH), amd64 i386 ia64 mips mipsel powerpc))
+export NUMA=1
+endif
+
 build: build-stamp
 install: build install-stamp
 
