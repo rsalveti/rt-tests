@@ -7,3 +7,7 @@ generated from the git repository, it adds the rt-tests.spec-in file.
 (dpkg-source only warns about Changlog, but doesn't add a hunk for it.) I
 don't know a nice way to prevent this, apart from accepting it or edit the
 diff by hand.
+
+So I always build using the orig.tar.gz.  See debian/build for a helper script.
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Thu, 18 Feb 2010 21:38:51 +0100
