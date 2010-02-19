@@ -1,13 +1,20 @@
 From: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
-Subject: rt-tests: install hwlatdetect directly into $bindir
+Subject: rt-tests: install hwlatdetect directly into $sbindir
 
-The python_lib directory is only for importable modules.
+The python_lib directory is only for importable modules.  As hwlatdetect
+needs root privileges install it into $sbindir.
 
 Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
 ---
 --- a/Makefile
 +++ b/Makefile
-@@ -15,8 +15,6 @@
+@@ -10,13 +10,12 @@
+ DESTDIR	?=
+ prefix  ?= /usr/local
+ bindir  ?= $(prefix)/bin
++sbindir ?= $(prefix)/sbin
+ mandir	?= $(prefix)/share/man
+ srcdir	?= $(prefix)/src
  
  CFLAGS = -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
  
@@ -16,13 +23,16 @@ Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
  ifndef DEBUG
  	CFLAGS	+= -O2
  else
-@@ -107,8 +105,7 @@
+@@ -105,10 +104,9 @@
+ .PHONY: install
+ install: all
  	mkdir -p "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mandir)/man4"
- 	mkdir -p "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mandir)/man8"
+-	mkdir -p "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mandir)/man8"
++	mkdir -p "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(mandir)/man8"
  	cp $(TARGETS) "$(DESTDIR)$(bindir)"
 -	install -m 755 src/hwlatdetect/hwlatdetect.py $(DESTDIR)$(PYLIB)/hwlatdetect.py
 -	ln -s $(PYLIB)/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect"
-+	install -m 755 src/hwlatdetect/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect"
++	install -m 755 src/hwlatdetect/hwlatdetect.py "$(DESTDIR)$(sbindir)/hwlatdetect"
  	mkdir -p "$(DESTDIR)$(srcdir)/backfire"
  	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4.gz"
  	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclictest.8.gz"
