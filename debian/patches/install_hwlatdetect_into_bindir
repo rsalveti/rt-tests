@@ -1,0 +1,28 @@
+From: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+Subject: rt-tests: install hwlatdetect directly into $bindir
+
+The python_lib directory is only for importable modules.
+
+Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+---
+--- a/Makefile
++++ b/Makefile
+@@ -15,8 +15,6 @@
+ 
+ CFLAGS = -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
+ 
+-PYLIB  := $(shell python -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
+-
+ ifndef DEBUG
+ 	CFLAGS	+= -O2
+ else
+@@ -107,8 +105,7 @@
+ 	mkdir -p "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mandir)/man4"
+ 	mkdir -p "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mandir)/man8"
+ 	cp $(TARGETS) "$(DESTDIR)$(bindir)"
+-	install -m 755 src/hwlatdetect/hwlatdetect.py $(DESTDIR)$(PYLIB)/hwlatdetect.py
+-	ln -s $(PYLIB)/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect"
++	install -m 755 src/hwlatdetect/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect"
+ 	mkdir -p "$(DESTDIR)$(srcdir)/backfire"
+ 	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4.gz"
+ 	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclictest.8.gz"
