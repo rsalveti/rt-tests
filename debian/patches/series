@@ -1,1 +1,2 @@
 install_hwlatdetect_into_bindir
+install_backfire_c_into_srcdir_backfire

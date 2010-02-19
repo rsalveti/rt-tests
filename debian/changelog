@@ -6,6 +6,7 @@ rt-tests (0.66-1) UNRELEASED; urgency=low
   * Switch to dpkg-source 3.0 (quilt) format
   * build with libnuma on platforms that have it
   * new patch: install hwlatdetect directly into $bindir
+  * new patch: install install backfire.c to $(srcdir)/backfire/
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Tue, 16 Feb 2010 21:00:49 +0100
 

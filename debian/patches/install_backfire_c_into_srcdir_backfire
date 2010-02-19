@@ -1,0 +1,15 @@
+From: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+Subject: rt-tests: install backfire.c to $(srcdir)/backfire/
+
+Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+---
+--- a/Makefile
++++ b/Makefile
+@@ -107,6 +107,7 @@
+ 	cp $(TARGETS) "$(DESTDIR)$(bindir)"
+ 	install -m 755 src/hwlatdetect/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect"
+ 	mkdir -p "$(DESTDIR)$(srcdir)/backfire"
++	install -m 644 src/backfire/backfire.c "$(DESTDIR)$(srcdir)/backfire/backfire.c"
+ 	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4.gz"
+ 	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclictest.8.gz"
+ 	gzip src/pi_tests/pi_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pi_stress.8.gz"
