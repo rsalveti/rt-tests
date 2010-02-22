@@ -1,4 +1,4 @@
-rt-tests (0.66-1) UNRELEASED; urgency=low
+rt-tests (0.66-1) unstable; urgency=low
 
   * add sh4 to architecture list (Closes: #555554)
   * new upstream release
@@ -8,7 +8,7 @@ rt-tests (0.66-1) UNRELEASED; urgency=low
   * new patch: install hwlatdetect directly into $sbindir
   * new patch: install install backfire.c to $(srcdir)/backfire/
 
- -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Tue, 16 Feb 2010 21:00:49 +0100
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 22 Feb 2010 15:35:03 +0100
 
 rt-tests (0.53-1) unstable; urgency=low
 
