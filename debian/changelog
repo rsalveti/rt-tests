@@ -1,5 +1,6 @@
-rt-tests (0.66-2) UNRELEASED; urgency=low
+rt-tests (0.66-2) UNRELEASED; urgency=high
 
+  * Urgency high due to rc bug fix
   * new patch: rename pip to pip_stress (Closes: #572104)
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 01 Mar 2010 16:47:16 +0100
