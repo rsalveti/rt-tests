@@ -82,7 +82,7 @@ This option has no influence when the \-s option is given.
 context switch tracing (used with \-b)
 .TP
 .B \-d, \-\-distance=DIST
-Set the distance of thread intervals in microseconds (default is 500us). When cylictest is called with the \-t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N\-1) + DIST
+Set the distance of thread intervals in microseconds (default is 500us). When cyclictest is called with the \-t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N\-1) + DIST
 .TP
 .B \-E, \-\-event
 event tracing (used with \-b)
@@ -130,11 +130,11 @@ set the ftrace tracer function. Used with the \-b option. Must be one
 of the trace functions available from <debugfs-mountpoint>/kernel/debug/tracing/available_tracers
 .TP
 .B \-t, \-\-threads[=NUM]
-Set the number of test threads (default is 1). Create NUM test threads. If NUM is not specifed, NUM is set to
+Set the number of test threads (default is 1). Create NUM test threads. If NUM is not specified, NUM is set to
 the number of available CPUs. See \-d, \-i and \-p for further information.
 .TP
 .B \-m, \-\-mlockall
-Lock current an future memory allocations to prevent being paged out
+Lock current and future memory allocations to prevent being paged out
 .TP
 .B \-v, \-\-verbose
 Output values on stdout for statistics. This option is used to gather statistical information about the latency distribution. The output is sent to stdout. The output format is:

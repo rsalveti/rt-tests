@@ -1,5 +1,5 @@
 /*
- * ptsematest.c
+ * pmqtest.c
  *
  * Copyright (C) 2009 Carsten Emde <C.Emde@osadl.org>
  *
@@ -34,6 +34,7 @@
 #include <sys/mman.h>
 #include <linux/unistd.h>
 #include <utmpx.h>
+#include <mqueue.h>
 #include "rt-utils.h"
 #include "rt-get_cpu.h"
 
@@ -43,14 +44,20 @@
 
 #define USEC_PER_SEC 1000000
 
+#define SYNCMQ_NAME "/syncmsg%d"
+#define TESTMQ_NAME "/testmsg%d"
+#define MSG_SIZE 8
+#define MSEC_PER_SEC 1000
+#define NSEC_PER_SEC 1000000000
+
+char *syncmsg = "Syncing";
+char *testmsg = "Testing";
+
 enum {
 	AFFINITY_UNSPECIFIED,
 	AFFINITY_SPECIFIED,
 	AFFINITY_USEALL
 };
-
-static pthread_mutex_t *testmutex;
-static pthread_mutex_t *syncmutex;
 
 struct params {
 	int num;
@@ -67,20 +74,26 @@ struct params {
 	struct timespec delay;
 	unsigned int mindiff, maxdiff;
 	double sumdiff;
-	struct timeval unblocked, received, diff;
+	struct timeval sent, received, diff;
 	pthread_t threadid;
+	int timeout;
+	int forcetimeout;
+	int timeoutcount;
+	mqd_t syncmq, testmq;
+	char recvsyncmsg[MSG_SIZE];
+	char recvtestmsg[MSG_SIZE];
 	struct params *neighbor;
 	char error[MAX_PATH * 2];
 };
 
-void *semathread(void *param)
+void *pmqthread(void *param)
 {
 	int mustgetcpu = 0;
-	int first = 1;
 	struct params *par = param;
 	cpu_set_t mask;
 	int policy = SCHED_FIFO;
 	struct sched_param schedp;
+	struct timespec ts;
 
 	memset(&schedp, 0, sizeof(schedp));
 	schedp.sched_priority = par->priority;
@@ -99,28 +112,88 @@ void *semathread(void *param)
 
 	while (!par->shutdown) {
 		if (par->sender) {
-			pthread_mutex_lock(&syncmutex[par->num]);
 
-			/* Release lock: Start of latency measurement ... */
-			gettimeofday(&par->unblocked, NULL);
-			pthread_mutex_unlock(&testmutex[par->num]);
+			/* Optionally force receiver timeout */
+			if (par->forcetimeout) {
+				struct timespec senddelay;
+				
+				senddelay.tv_sec = par->forcetimeout;
+				senddelay.tv_nsec = 0;
+				clock_nanosleep(CLOCK_MONOTONIC, 0, &senddelay, NULL);
+			}
+
+			/* Send message: Start of latency measurement ... */
+			gettimeofday(&par->sent, NULL);
+			if (mq_send(par->testmq, testmsg, strlen(testmsg), 1) != 0) {
+				fprintf(stderr, "could not send test message\n");
+				par->shutdown = 1;
+			}
 			par->samples++;
 			if(par->max_cycles && par->samples >= par->max_cycles)
 				par->shutdown = 1;
 			if (mustgetcpu)
 				par->cpu = get_cpu();
+			/* Wait until receiver ready */
+			if (par->timeout) {
+				clock_gettime(CLOCK_REALTIME, &ts);
+				ts.tv_sec += par->timeout;
+	
+				if (mq_timedreceive(par->syncmq, par->recvsyncmsg, MSG_SIZE, NULL, &ts)
+				    != strlen(syncmsg)) {
+					fprintf(stderr, "could not receive sync message\n");
+					par->shutdown = 1;				
+				}
+			} 
+			if (mq_receive(par->syncmq, par->recvsyncmsg, MSG_SIZE, NULL) !=
+			    strlen(syncmsg)) {
+				perror("could not receive sync message");
+				par->shutdown = 1;				
+			}
+			if (!par->shutdown && strcmp(syncmsg, par->recvsyncmsg)) {
+				fprintf(stderr, "ERROR: Sync message mismatch detected\n");
+				fprintf(stderr, "  %s != %s\n", syncmsg, par->recvsyncmsg);
+				par->shutdown = 1;
+			}
 		} else {
 			/* Receiver */
-			if (!first) {
-				pthread_mutex_lock(&syncmutex[par->num]);
-				first = 1;
+			if (par->timeout) {
+				clock_gettime(CLOCK_REALTIME, &ts);
+				par->timeoutcount = 0;
+				ts.tv_sec += par->timeout;
+				do {
+					if (mq_timedreceive(par->testmq, par->recvtestmsg,
+					    MSG_SIZE, NULL, &ts) != strlen(testmsg)) {
+						if (!par->forcetimeout || errno != ETIMEDOUT) {
+							perror("could not receive test message");
+							par->shutdown = 1;
+							break;
+						}
+						if (errno == ETIMEDOUT) {
+							par->timeoutcount++;
+							clock_gettime(CLOCK_REALTIME, &ts);
+							ts.tv_sec += par->timeout;
+						}
+					} else
+						break;
+				}
+				while (1);
+			} else {
+				if (mq_receive(par->testmq, par->recvtestmsg, MSG_SIZE, NULL) !=
+				    strlen(testmsg)) {
+					perror("could not receive test message");
+					par->shutdown = 1;
+				}
 			}
-			pthread_mutex_lock(&testmutex[par->num]);
-
-			/* ... Got the lock: End of latency measurement */
+			/* ... Received the message: End of latency measurement */
 			gettimeofday(&par->received, NULL);
+
+			if (!par->shutdown && strcmp(testmsg, par->recvtestmsg)) {
+				fprintf(stderr, "ERROR: Test message mismatch detected\n");
+				fprintf(stderr, "  %s != %s\n", testmsg, par->recvtestmsg);
+				par->shutdown = 1;
+			}
 			par->samples++;
-			timersub(&par->received, &par->neighbor->unblocked,
+			timersub(&par->received, &par->neighbor->sent,
 			    &par->diff);
 
 			if (par->diff.tv_usec < par->mindiff)
@@ -150,8 +223,13 @@ void *semathread(void *param)
 				par->shutdown = 1;
 			if (mustgetcpu)
 				par->cpu = get_cpu();
-			nanosleep(&par->delay, NULL);
-			pthread_mutex_unlock(&syncmutex[par->num]);
+			clock_nanosleep(CLOCK_MONOTONIC, 0, &par->delay, NULL);
+
+			/* Tell receiver that we are ready for the next measurement */
+			if (mq_send(par->syncmq, syncmsg, strlen(syncmsg), 1) != 0) {
+				fprintf(stderr, "could not send sync message\n");
+				par->shutdown = 1;
+			}
 		}
 	}
 	par->stopped = 1;
@@ -161,15 +239,16 @@ void *semathread(void *param)
 
 static void display_help(void)
 {
-	printf("ptsematest V %1.2f\n", VERSION_STRING);
-	puts("Usage: ptsematest <options>");
-	puts("Function: test POSIX threads mutex latency");
+	printf("pmqtest V %1.2f\n", VERSION_STRING);
+	puts("Usage: pmqtest <options>");
+	puts("Function: test POSIX message queue latency");
 	puts(
 	"Options:\n"
 	"-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
 	"                           with NUM pin all threads to the processor NUM\n"
 	"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
 	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+	"-f TO    --forcetimeout=TO force timeout of mq_timedreceive(), requires -T\n"
 	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
 	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
 	"-p PRIO  --prio=PRIO       priority\n"
@@ -178,7 +257,9 @@ static void display_help(void)
 	"-t       --threads         one thread per available processor\n"
 	"-t [NUM] --threads=NUM     number of threads:\n"
 	"                           without NUM, threads = max_cpus\n"
-	"                           without -t default = 1\n");
+	"                           without -t default = 1\n"
+	"-T TO    --timeout=TO      use mq_timedreceive() instead of mq_receive()\n"
+	"                           with timeout TO in seconds\n");
 	exit(1);
 }
 
@@ -193,6 +274,8 @@ static int interval = 1000;
 static int distance = 500;
 static int smp;
 static int sameprio;
+static int timeout;
+static int forcetimeout;
 
 static void process_options (int argc, char *argv[])
 {
@@ -206,15 +289,17 @@ static void process_options (int argc, char *argv[])
 			{"affinity", optional_argument, NULL, 'a'},
 			{"breaktrace", required_argument, NULL, 'b'},
 			{"distance", required_argument, NULL, 'd'},
+			{"forcetimeout", required_argument, NULL, 'f'},
 			{"interval", required_argument, NULL, 'i'},
 			{"loops", required_argument, NULL, 'l'},
 			{"priority", required_argument, NULL, 'p'},
 			{"smp", no_argument, NULL, 'S'},
 			{"threads", optional_argument, NULL, 't'},
+			{"timeout", required_argument, NULL, 'T'},
 			{"help", no_argument, NULL, '?'},
 			{NULL, 0, NULL, 0}
 		};
-		int c = getopt_long (argc, argv, "a::b:d:i:l:p:St::",
+		int c = getopt_long (argc, argv, "a::b:d:f:i:l:p:St::T:",
 			long_options, &option_index);
 		if (c == -1)
 			break;
@@ -236,6 +321,7 @@ static void process_options (int argc, char *argv[])
 			break;
 		case 'b': tracelimit = atoi(optarg); break;
 		case 'd': distance = atoi(optarg); break;
+		case 'f': forcetimeout = atoi(optarg); break;
 		case 'i': interval = atoi(optarg); break;
 		case 'l': max_cycles = atoi(optarg); break;
 		case 'p': priority = atoi(optarg); break;
@@ -256,6 +342,7 @@ static void process_options (int argc, char *argv[])
 			else
 				num_threads = max_cpus;
 			break;
+		case 'T': timeout = atoi(optarg); break;
 		case '?': error = 1; break;
 		}
 	}
@@ -279,6 +366,9 @@ static void process_options (int argc, char *argv[])
 	if (num_threads < 1)
 		error = 1;
 
+	if (forcetimeout && !timeout)
+		error = 1;
+ 
 	if (priority && smp)
 		sameprio = 1;
 
@@ -298,11 +388,21 @@ int main(int argc, char *argv[])
 {
 	int i;
 	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
-	int oldsamples = 1;
 	struct params *receiver = NULL;
 	struct params *sender = NULL;
 	sigset_t sigset;
+	int oldsamples = INT_MAX;
+	int oldtimeoutcount = INT_MAX;
+	int first = 1;
+	int errorlines = 0;
 	struct timespec maindelay;
+	int oflag = O_CREAT|O_RDWR;
+	struct mq_attr mqstat;
+
+	memset(&mqstat, 0, sizeof(mqstat));
+	mqstat.mq_maxmsg = 1;
+	mqstat.mq_msgsize = 8;
+	mqstat.mq_flags = 0;
 
 	process_options(argc, argv);
 
@@ -314,6 +414,11 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGTERM);
+	sigaddset(&sigset, SIGINT);
+	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+
 	signal(SIGINT, sighand);
 	signal(SIGTERM, sighand);
 
@@ -322,22 +427,25 @@ int main(int argc, char *argv[])
 	if (receiver == NULL || sender == NULL)
 		goto nomem;
 
-	testmutex = (pthread_mutex_t *) calloc(num_threads, sizeof(pthread_mutex_t));
-	syncmutex = (pthread_mutex_t *) calloc(num_threads, sizeof(pthread_mutex_t));
-	if (testmutex == NULL || syncmutex == NULL)
-		goto nomem;
-
 	for (i = 0; i < num_threads; i++) {
+		char mqname[16];
+
+		sprintf(mqname, SYNCMQ_NAME, i);
+		receiver[i].syncmq = mq_open(mqname, oflag, 0777, &mqstat);
+		if (receiver[i].syncmq == (mqd_t) -1) {
+			fprintf(stderr, "could not open POSIX message queue #1\n");
+			return 1;
+		}
+		sprintf(mqname, TESTMQ_NAME, i);
+		receiver[i].testmq = mq_open(mqname, oflag, 0777, &mqstat);
+		if (receiver[i].testmq == (mqd_t) -1) {
+			fprintf(stderr, "could not open POSIX message queue #2\n");
+			return 1;
+		}
+
 		receiver[i].mindiff = UINT_MAX;
 		receiver[i].maxdiff = 0;
 		receiver[i].sumdiff = 0.0;
-
-
-		pthread_mutex_init(&testmutex[i], NULL);
-		pthread_mutex_init(&syncmutex[i], NULL);
-
-		/* Wait on first attempt */
-		pthread_mutex_lock(&testmutex[i]);
 
 		receiver[i].num = i;
 		receiver[i].cpu = i;
@@ -356,30 +464,45 @@ int main(int argc, char *argv[])
 		receiver[i].max_cycles = max_cycles;
 		receiver[i].sender = 0;
 		receiver[i].neighbor = &sender[i];
-		pthread_create(&receiver[i].threadid, NULL, semathread, &receiver[i]);
+		receiver[i].timeout = timeout;
+		receiver[i].forcetimeout = forcetimeout;
+		pthread_create(&receiver[i].threadid, NULL, pmqthread, &receiver[i]);
 		memcpy(&sender[i], &receiver[i], sizeof(receiver[0]));
 		sender[i].sender = 1;
 		sender[i].neighbor = &receiver[i];
-		pthread_create(&sender[i].threadid, NULL, semathread, &sender[i]);
+		pthread_create(&sender[i].threadid, NULL, pmqthread, &sender[i]);
 	}
 
 	maindelay.tv_sec = 0;
 	maindelay.tv_nsec = 50000000; /* 50 ms */
 
-	while (!shutdown) {
-		int printed;
-		int errorlines = 0;
+	sigemptyset(&sigset);
+	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
 
-		for (i = 0; i < num_threads; i++)
-			shutdown |= receiver[i].shutdown | sender[i].shutdown;
+	do {
+		int newsamples = 0, newtimeoutcount = 0;
+		int minsamples = INT_MAX;
 
-		if (receiver[0].samples > oldsamples || shutdown) {
+		for (i = 0; i < num_threads; i++) {
+			newsamples += receiver[i].samples;
+			newtimeoutcount += receiver[i].timeoutcount;
+			if (receiver[i].samples < minsamples)
+				minsamples = receiver[i].samples;
+		}
+
+		if (minsamples > 1 && (shutdown || newsamples > oldsamples ||
+			newtimeoutcount > oldtimeoutcount)) {
+
+			if (!first)
+				printf("\033[%dA", num_threads*2 + errorlines);
+			first = 0;
+
 			for (i = 0; i < num_threads; i++) {
-				printf("#%1d: ID%d, P%d, CPU%d, I%ld; #%1d: ID%d, P%d, CPU%d, Cycles %d\n",
+				printf("#%1d: ID%d, P%d, CPU%d, I%ld; #%1d: ID%d, P%d, CPU%d, TO %d, Cycles %d   \n",
 				    i*2, receiver[i].tid, receiver[i].priority, receiver[i].cpu,
 				    receiver[i].delay.tv_nsec / 1000,
 				    i*2+1, sender[i].tid, sender[i].priority, sender[i].cpu,
-				    sender[i].samples);
+				    receiver[i].timeoutcount, sender[i].samples);
 			}
 			for (i = 0; i < num_threads; i++) {
 				printf("#%d -> #%d, Min %4d, Cur %4d, Avg %4d, Max %4d\n",
@@ -398,31 +521,31 @@ int main(int argc, char *argv[])
 					receiver[i].error[0] = '\0';
 				}
 			}
-			printed = 1;
-		} else
-			printed = 0;
+		} else {
+			if (minsamples < 1)
+				printf("Collecting ...\n\033[1A");
+		}
+		
+		fflush(NULL);
 
-		sigemptyset(&sigset);
-		sigaddset(&sigset, SIGTERM);
-		sigaddset(&sigset, SIGINT);
-		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+		oldsamples = 0;
+		oldtimeoutcount = 0;
+		for (i = 0; i < num_threads; i++) {
+			oldsamples += receiver[i].samples;
+			oldtimeoutcount += receiver[i].timeoutcount;
+		}
 
 		nanosleep(&maindelay, NULL);
 
-		sigemptyset(&sigset);
-		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+		for (i = 0; i < num_threads; i++)
+			shutdown |= receiver[i].shutdown | sender[i].shutdown;
 
-		if (printed && !shutdown)
-			printf("\033[%dA", num_threads*2 + errorlines);
-	}
+	} while (!shutdown);
 
 	for (i = 0; i < num_threads; i++) {
 		receiver[i].shutdown = 1;
 		sender[i].shutdown = 1;
-		pthread_mutex_unlock(&testmutex[i]);
-		pthread_mutex_unlock(&syncmutex[i]);
 	}
-	nanosleep(&receiver[0].delay, NULL);
 
 	for (i = 0; i < num_threads; i++) {
 		if (!receiver[i].stopped)
@@ -430,13 +553,20 @@ int main(int argc, char *argv[])
 		if (!sender[i].stopped)
 			pthread_kill(sender[i].threadid, SIGTERM);
 	}
-
+	nanosleep(&maindelay, NULL);
 	for (i = 0; i < num_threads; i++) {
-		pthread_mutex_destroy(&testmutex[i]);
-		pthread_mutex_destroy(&syncmutex[i]);
+		char mqname[16];
+
+		mq_close(receiver[i].syncmq);
+		sprintf(mqname, SYNCMQ_NAME, i);
+		mq_unlink(mqname);
+
+		mq_close(receiver[i].testmq);
+		sprintf(mqname, TESTMQ_NAME, i);
+		mq_unlink(mqname);
 	}
 
- 	nomem:
+	nomem:
 
 	return 0;
 }

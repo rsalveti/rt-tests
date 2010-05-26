@@ -23,4 +23,6 @@ ptsematest
 sendme
 sigwaittest
 svsematest
-pip
+pip_stress
+hackbench
+pmqtest

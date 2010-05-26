@@ -13,9 +13,9 @@ Obsoletes: cyclictest signaltest pi_tests
 BuildRequires: numactl-devel
 
 %description
-A set of programs that test and measure various components of "realtime"
-kernel behavior, such as timer latency, signal latency and the functioning
-of priority-inheritance mutexes.
+rt-tests is a set of programs that test and measure various components of
+real-time kernel behavior. This package measures timer, signal, and hardware
+latency. It also tests the functioning of priority-inheritance mutexes. 
 
 %prep
 %setup -qn rt-tests
@@ -40,11 +40,14 @@ rm -rf $RPM_BUILD_ROOT
 /usr/bin/signaltest
 /usr/bin/hwlatdetect
 /usr/bin/rt-migrate-test
-/usr/bin/pip
+/usr/bin/pip_stress
 /usr/bin/ptsematest
 /usr/bin/sendme
 /usr/bin/sigwaittest
 /usr/bin/svsematest
+/usr/bin/pmqtest
+/usr/bin/hackbench
+/usr/src/backfire/backfire.c
 %doc
 /usr/share/man/man8/cyclictest.8.gz
 /usr/share/man/man8/pi_stress.8.gz
@@ -54,8 +57,48 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/man/man8/sendme.8.gz
 /usr/share/man/man8/sigwaittest.8.gz
 /usr/share/man/man8/svsematest.8.gz
+/usr/share/man/man8/pmqtest.8.gz
+/usr/share/man/man8/hackbench.8.gz
 
 %changelog
+* Tue May 18 2010 Clark Williams <williams@redhat.com> - 0.71-1
+- from Michal Schmit <mschmidt@redhat.com>:
+  - fix accumulating overruns in periodic timer mode
+
+* Fri Apr  9 2010 Clark Williams <williams@redhat.com> - 0.70-1
+- from Olaf Hering <olaf@aepfle.de>
+  - skip python dependency during install if python not available
+
+* Fri Apr  9 2010 Clark Williams <williams@redhat.com> - 0.69-1
+- fix bus error in cyclictest on NUMA systems with more than 16 cores
+- reset default cyclictest policy to SCHED_OTHER
+- from Carsten Emde <C.Emde@osadl.org>
+  - add pmqest program for testing posix message queue performance
+  - misc doc fixes
+
+* Fri Mar 19 2010 Clark Williams <williams@redhat.com> - 0.68-1
+- fix tracing difference between 2.6.24 and 2.6.33
+
+* Tue Mar 16 2010 Clark Williams <williams@redhat.com> - 0.67-1
+- modified specfile to add hackbench
+- modified internal ftrace logic for correct tracing
+- Changed rpm %description field to be more descriptive (BZ# 572323)
+- from Carsten Emde <c.emde@osadl.org>
+  - added smp option to svsematest
+  - fixed policy display in cyclictest
+- from John Kacur <jkacur@redhat.com>
+  - changed default scheduling policy to SCHED_FIFO
+  - fixed spelling mistake on cyclictest man page
+  - use symbolic names for scheduling policy
+  - reverted commit 582be2a52c43801a10d318de7491f1cc7243d5cf to 
+    deal with bug in priority distribution
+- from Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+  - renamed pip to pip_stress
+  - eliminated use of temp files in dependency generation
+  - install backfire.c module source in /usr/src/backfire
+- from David Sommerseth <davids@redhat.com>
+  - added new-and-improved hackbench to rt-tests
+
 * Mon Feb 15 2010 Clark Williams <williams@redhat.com> - 0.66-1
 - fix incorrect usage of sched_setscheduler in check_privs()
 
