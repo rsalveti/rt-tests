@@ -1,3 +1,1 @@
 install_hwlatdetect_into_sbindir
-install_backfire_c_into_srcdir_backfire
-rename_pip_to_pip_stress
