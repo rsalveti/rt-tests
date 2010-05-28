@@ -4,6 +4,7 @@ rt-tests (0.71-1) UNRELEASED; urgency=low
   * drop install_backfire_c_into_srcdir_backfire (applied upstream)
   * drop rename_pip_to_pip_stress (applied upstream)
   * refresh install_hwlatdetect_into_sbindir
+  * add powerpcspe to architecture list
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Wed, 26 May 2010 11:43:32 +0200
 
