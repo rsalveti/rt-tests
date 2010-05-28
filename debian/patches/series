@@ -1,1 +1,2 @@
 install_hwlatdetect_into_sbindir
+modernize_backfire_Makefile
