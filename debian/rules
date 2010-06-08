@@ -6,19 +6,21 @@ ifneq (,$(findstring $(DEB_BUILD_ARCH), amd64 i386 ia64 mips mipsel powerpc))
 export NUMA=1
 endif
 
+DH = dh --with dkms
+
 build: build-stamp
 install: build install-stamp
 
 build-stamp install-stamp:
-	dh ${@:-stamp=}
+	$(DH) ${@:-stamp=}
 	touch $@
 
 binary-arch binary-indep: install
-	dh $@
+	$(DH) $@
 
 binary: binary-arch binary-indep
 
 clean:
-	dh $@
+	$(DH) $@
 
 .PHONY: build clean install binary-indep binary-arch binary 

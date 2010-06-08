@@ -1,2 +1,4 @@
 install_hwlatdetect_into_sbindir
 modernize_backfire_Makefile
+install_backfire_Makefile
+debian_adapt_errormsg_on_failure_to_open_device

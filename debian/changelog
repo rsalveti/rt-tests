@@ -5,6 +5,7 @@ rt-tests (0.71-1) UNRELEASED; urgency=low
   * drop rename_pip_to_pip_stress (applied upstream)
   * refresh install_hwlatdetect_into_sbindir
   * add powerpcspe to architecture list
+  * add backfire package with dkms support
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Wed, 26 May 2010 11:43:32 +0200
 
