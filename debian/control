@@ -8,7 +8,7 @@ Vcs-Browser: http://git.pengutronix.de/?p=ukl/rt-tests.git;
 Vcs-Git: git://git.pengutronix.de/git/ukl/rt-tests.git
 
 Package: rt-tests
-Architecture: alpha amd64 armel i386 ia64 mips mipsel powerpc powerpcspe s390 sh4 sparc
+Architecture: alpha amd64 avr32 armel i386 ia64 m68k mips mipsel powerpc powerpcspe s390 sh4 sparc sparc64
 Depends: ${shlibs:Depends}, ${misc:Depends}, python,
  libnuma1 (>= 2.0.3) [amd64 i386 ia64 mips mipsel powerpc]
 Conflicts: xenomai-runtime
