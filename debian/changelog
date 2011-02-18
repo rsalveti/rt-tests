@@ -1,3 +1,11 @@
+rt-tests (0.72-1) UNRELEASED; urgency=low
+
+  * new upstream release
+  * new patch kernvar_fix_possible_buffer_overflow
+  * add avr32, m68k and sparc64 to architecture list
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Fri, 18 Feb 2011 17:05:15 +0100
+
 rt-tests (0.71-1) unstable; urgency=low
 
   * new upstream release
