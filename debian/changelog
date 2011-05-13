@@ -1,8 +1,9 @@
-rt-tests (0.72-2) unstable; urgency=low
+rt-tests (0.73-1) UNRELEASED; urgency=low
 
+  * new upstream release
   * Fix dkms warning (Closes: LP: #681908). Patch by eraserix, thanks.
 
- -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Wed, 30 Mar 2011 10:17:22 +0200
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Fri, 13 May 2011 12:22:25 +0200
 
 rt-tests (0.72-1) unstable; urgency=low
 

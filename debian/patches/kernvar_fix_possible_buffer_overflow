@@ -48,7 +48,7 @@ Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
  		if (mode == O_RDONLY) {
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -199,9 +199,16 @@
+@@ -206,9 +206,16 @@
  	char filename[128];
  	int retval = 1;
  	int path;
