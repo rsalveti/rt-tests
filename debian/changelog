@@ -3,6 +3,8 @@ rt-tests (0.73-1) UNRELEASED; urgency=low
   * new upstream release
   * Fix dkms warning (Closes: LP: #681908). Patch by eraserix, thanks.
   * add build-{arch,indep} targets to debian/rules
+  * new patch providing a man page for pip_stress to make lintian a bit
+    happier.
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Fri, 13 May 2011 12:22:25 +0200
 
