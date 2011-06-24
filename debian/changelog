@@ -6,7 +6,7 @@ rt-tests (0.73-1) UNRELEASED; urgency=low
   * new patch providing a man page for pip_stress to make lintian a bit
     happier.
   * provide sequence as first parameter to dh for debhelper compatitility
-    level 8
+    level 8 and switch to level 8
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Fri, 13 May 2011 12:22:25 +0200
 
