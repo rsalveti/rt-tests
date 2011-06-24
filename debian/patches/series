@@ -2,3 +2,4 @@ install_hwlatdetect_into_sbindir
 debian_adapt_errormsg_on_failure_to_open_device
 kernvar_fix_possible_buffer_overflow
 manpage_pip_stress.patch
+debian_has_recent_glibc
