@@ -8,6 +8,8 @@ rt-tests (0.73-1) UNRELEASED; urgency=low
   * provide sequence as first parameter to dh for debhelper compatitility
     level 8 and switch to level 8
   * Standards-Version: 3.9.2 (no changes needed)
+  * new patch to fix wording for error message when setting the
+    scheduling policy fails (Closes: #619938)
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Fri, 13 May 2011 12:22:25 +0200
 
