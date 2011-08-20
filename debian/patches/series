@@ -3,3 +3,4 @@ debian_adapt_errormsg_on_failure_to_open_device
 manpage_pip_stress.patch
 debian_has_recent_glibc
 fix_comment_about_realtime_group.patch
+backfire-fix-build-failure-for-modern-kernels.patch
