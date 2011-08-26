@@ -19,7 +19,7 @@ Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
 License: GPL-2+
 
 Files: src/cyclictest/cyclictest.c
-Copyright: (C) 2008-2010 Clark Williams <williams@redhat.com>
+Copyright: (C) 2008-2011 Clark Williams <williams@redhat.com>
 	   (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
 License: GPL-2
 
@@ -61,6 +61,7 @@ Copyright: (C) 2009 John Kacur <jkacur@redhat.com>
 Licence: GPL-2+
 
 Files: src/pi_tests/pi_stress.c
+Files: src/pi_tests/classic_pi.c
 Files: src/pi_tests/sigtest.c
 Copyright: (C) 2006, 2007 Clark Williams <williams@redhat.com>
 License: GPL-2+
