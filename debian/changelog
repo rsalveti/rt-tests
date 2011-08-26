@@ -1,4 +1,4 @@
-rt-tests (0.74-1) UNRELEASED; urgency=low
+rt-tests (0.74-1) unstable; urgency=low
 
   * new upstream release
   * Fix dkms warning (Closes: LP: #681908). Patch by eraserix, thanks.
@@ -12,7 +12,7 @@ rt-tests (0.74-1) UNRELEASED; urgency=low
     scheduling policy fails (Closes: #619938)
   * drop patch kernvar_fix_possible_buffer_overflow (applied upstream)
 
- -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Fri, 13 May 2011 12:22:25 +0200
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Fri, 26 Aug 2011 09:25:37 +0200
 
 rt-tests (0.72-1) unstable; urgency=low
 
