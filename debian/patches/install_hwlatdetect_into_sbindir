@@ -11,13 +11,15 @@ Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
 
 --- a/Makefile
 +++ b/Makefile
-@@ -11,13 +11,12 @@
+@@ -11,6 +11,7 @@
  DESTDIR	?=
  prefix  ?= /usr/local
  bindir  ?= $(prefix)/bin
 +sbindir ?= $(prefix)/sbin
  mandir	?= $(prefix)/share/man
  srcdir	?= $(prefix)/src
+ 
+@@ -22,8 +23,6 @@
  
  CFLAGS = -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
  
@@ -26,7 +28,7 @@ Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
  ifndef DEBUG
  	CFLAGS	+= -O2
  else
-@@ -113,10 +112,7 @@
+@@ -119,10 +118,7 @@
  	mkdir -p "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mandir)/man4"
  	mkdir -p "$(DESTDIR)$(srcdir)" "$(DESTDIR)$(mandir)/man8"
  	cp $(TARGETS) "$(DESTDIR)$(bindir)"

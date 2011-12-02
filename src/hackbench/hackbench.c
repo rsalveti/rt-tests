@@ -28,16 +28,21 @@
 #include <getopt.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <sched.h>
 
 static unsigned int datasize = 100;
 static unsigned int loops = 100;
 static unsigned int num_groups = 10;
 static unsigned int num_fds = 20;
+static unsigned int fifo = 0;
 
 /*
  * 0 means thread mode and others mean process (default)
  */
-static unsigned int process_mode = 1;
+#define THREAD_MODE 0
+#define PROCESS_MODE 1
+
+static unsigned int process_mode = PROCESS_MODE;
 
 static int use_pipes = 0;
 
@@ -159,7 +164,7 @@ static void *receiver(struct receiver_context* ctx)
 	unsigned int i;
 
 	reset_worker_signals();
-	if (process_mode)
+	if (process_mode == PROCESS_MODE)
 		close(ctx->in_fds[1]);
 
 	/* Wait for start... */
@@ -192,7 +197,7 @@ childinfo_t create_worker(void *ctx, void *(*func)(void *))
 	pid_t childpid;
 
 	switch (process_mode) {
-	case 1: /* process mode */
+	case PROCESS_MODE: /* process mode */
 		/* Fork the sender/receiver child. */
 		switch ((childpid = fork())) {
 			case -1:
@@ -206,7 +211,7 @@ childinfo_t create_worker(void *ctx, void *(*func)(void *))
 		child.pid = childpid;
 		break;
 
-	case 0: /* threaded mode */
+	case THREAD_MODE: /* threaded mode */
 		if (pthread_attr_init(&attr) != 0) {
 			sneeze("pthread_attr_init()");
 			child.error = -1;
@@ -231,6 +236,15 @@ childinfo_t create_worker(void *ctx, void *(*func)(void *))
 	return child;
 }
 
+void signal_workers(childinfo_t *children, unsigned int num_children)
+{
+	int i;
+	printf("signaling %d worker threads to terminate\n", num_children);
+	for (i=0; i < num_children; i++) {
+		kill(children[i].pid, SIGTERM);
+	}
+}
+
 unsigned int reap_workers(childinfo_t *child, unsigned int totchld, unsigned int dokill)
 {
 	unsigned int i, rc = 0;
@@ -240,13 +254,13 @@ unsigned int reap_workers(childinfo_t *child, unsigned int totchld, unsigned int
 	if (dokill) {
 		fprintf(stderr, "sending SIGTERM to all child processes\n");
 		signal(SIGTERM, SIG_IGN);
-		kill(0, SIGTERM);
+		signal_workers(child, totchld);
 	}
 
 	for( i = 0; i < totchld; i++ ) {
 		int pid;
 		switch( process_mode ) {
-		case 1: /* process mode */
+		case PROCESS_MODE: /* process mode */
 			fflush(stdout);
 			pid = wait(&status);
 			if (pid == -1 && errno == ECHILD)
@@ -254,7 +268,7 @@ unsigned int reap_workers(childinfo_t *child, unsigned int totchld, unsigned int
 			if (!WIFEXITED(status))
 				rc++;
 			break;
-		case 0: /* threaded mode */
+		case THREAD_MODE: /* threaded mode */
 			err = pthread_join(child[i].threadid, &thr_status);
 			if( err != 0 ) {
 				sneeze("pthread_join()");
@@ -307,7 +321,7 @@ static unsigned int group(childinfo_t *child,
 			return (i > 0 ? i-1 : 0);
 		}
 		snd_ctx->out_fds[i] = fds[1];
-		if (process_mode)
+		if (process_mode == PROCESS_MODE)
 			close(fds[0]);
 	}
 
@@ -324,7 +338,7 @@ static unsigned int group(childinfo_t *child,
 	}
 
 	/* Close the fds we have left */
-	if (process_mode)
+	if (process_mode == PROCESS_MODE)
 		for (i = 0; i < num_fds; i++)
 			close(snd_ctx->out_fds[i]);
 
@@ -347,11 +361,12 @@ static void process_options (int argc, char *argv[])
 			{"fds",	      required_argument, NULL, 'f'},
 			{"threads",   no_argument,	 NULL, 'T'},
 			{"processes", no_argument,	 NULL, 'P'},
+			{"fifo",      no_argument,       NULL, 'F'},
 			{"help",      no_argument,	 NULL, 'h'},
 			{NULL, 0, NULL, 0}
 		};
 
-		int c = getopt_long(argc, argv, "ps:l:g:f:TPh",
+		int c = getopt_long(argc, argv, "ps:l:g:f:TPFh",
 				    longopts, &optind);
 		if (c == -1) {
 			break;
@@ -390,10 +405,14 @@ static void process_options (int argc, char *argv[])
 			break;
 
 		case 'T':
-			process_mode = 0;
+			process_mode = THREAD_MODE;
 			break;
 		case 'P':
-			process_mode = 1;
+			process_mode = PROCESS_MODE;
+			break;
+
+		case 'F':
+			fifo = 1;
 			break;
 
 		case 'h':
@@ -423,11 +442,12 @@ int main(int argc, char *argv[])
 	struct timeval start, stop, diff;
 	int readyfds[2], wakefds[2];
 	char dummy;
+	struct sched_param sp;
 
 	process_options (argc, argv);
 
 	printf("Running in %s mode with %d groups using %d file descriptors each (== %d tasks)\n",
-	       (process_mode == 0 ? "threaded" : "process"),
+	       (process_mode == THREAD_MODE ? "threaded" : "process"),
 	       num_groups, 2*num_fds, num_groups*(num_fds*2));
 	printf("Each sender will pass %d messages of %d bytes\n", loops, datasize);
 	fflush(NULL);
@@ -455,6 +475,13 @@ int main(int argc, char *argv[])
 			}
 			total_children += c;
 		}
+		if (fifo) {
+			/* make main a realtime task so that we can manage the workers */
+			sp.sched_priority = 1;
+			if (sched_setscheduler(0, SCHED_FIFO, &sp) < 0)
+				barf("can't change to fifo in main");
+		}
+
 		/* Wait for everyone to be ready */
 		for (i = 0; i < total_children; i++)
 			if (read(readyfds[0], &dummy, 1) != 1) {
@@ -470,8 +497,11 @@ int main(int argc, char *argv[])
 			barf("Writing to start senders");
 		}
 	}
-	else
+	else {
 		fprintf(stderr, "longjmp'ed out, reaping children\n");
+		signal(SIGINT, SIG_IGN);
+		signal(SIGTERM, SIG_IGN);
+	}
 
 	/* Reap them all */
 	reap_workers(child_tab, total_children, signal_caught);

@@ -10,7 +10,7 @@ Forwarded: not-needed
 
 --- a/src/backfire/sendme.c
 +++ b/src/backfire/sendme.c
-@@ -212,9 +212,9 @@
+@@ -220,9 +220,9 @@
  				"try 'modprobe backfire'\n"
  				"If the module backfire can't be loaded, "
  				"it may need to be built first.\n"

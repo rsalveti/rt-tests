@@ -41,7 +41,7 @@ Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
 +was written by John Kacur <jkacur@redhat.com>.
 --- a/Makefile
 +++ b/Makefile
-@@ -118,6 +118,7 @@
+@@ -124,6 +124,7 @@
  	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4.gz"
  	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclictest.8.gz"
  	gzip src/pi_tests/pi_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pi_stress.8.gz"

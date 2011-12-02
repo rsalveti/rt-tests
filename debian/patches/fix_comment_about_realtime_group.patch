@@ -14,7 +14,7 @@ Closes: http://bugs.debian.org/619938
 
 --- a/src/lib/rt-utils.c
 +++ b/src/lib/rt-utils.c
-@@ -72,7 +72,8 @@
+@@ -264,7 +264,8 @@
  	param.sched_priority = 1;
  	if (sched_setscheduler(0, SCHED_FIFO, &param)) {
  		fprintf(stderr, "Unable to change scheduling policy!\n");

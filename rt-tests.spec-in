@@ -62,6 +62,44 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/man/man8/hackbench.8.gz
 
 %changelog
+* Mon Sep 26 2011 Clark Williams <williams@redhat.com> - 0.83-1
+- modified Makefile to be smarter about building with NUMA
+
+* Wed Sep 21 2011 Clark Williams <williams@redhat.com> - 0.82-1
+- fix print that causes error in histogram processing
+
+* Tue Sep 20 2011 Clark Williams <williams@redhat.com> - 0.81-1
+- cleaned up previous hack for /dev/cpu_dma_latency interface
+
+* Tue Sep 20 2011 Clark Williams <williams@redhat.com> - 0.80-1
+- use /dev/cpu_dma_latency interface to prevent cstate transitions
+  in cyclictest
+
+* Thu Sep 15 2011 Clark Williams <williams@redhat.com> - 0.79-1
+- added signal_workers routine to hackbench
+- added -F/--fifo option to hackbench
+
+* Wed Sep 14 2011 Clark Williams <williams@redhat.com> - 0.78-1
+- modified hackebench signal logic
+
+* Fri Sep  9 2011 Clark Williams <williams@redhat.com> - 0.77-1
+- removed tracemark functions (too much contention on multiprocessors)
+
+* Wed Sep  7 2011 Clark Williams <williams@redhat.com> - 0.76-1
+- only turn on /proc/sys/kernel/ftrace_enabled for a tracer that
+  needs it
+- make sure to set current_tracer to function for -f switch
+  
+* Fri Sep  2 2011 Clark Williams <williams@redhat.com> - 0.75-1
+- added utility routines for mounting debugfs and event/tracing manipulation
+- from Steven Rostedt <srostedt@redhat.com>:
+  - allow events for all tracers
+  - Have -I and -P together also be -B
+  - do not touch tracing_thresh
+  - only check file descriptor in tracemark() function
+  - use interval on first loop instead of 1 second
+  - allow tracemark() to take variable args
+
 * Thu Aug 18 2011 Clark Williams <williams@redhat.com> - 0.74-1
 - changes to deal with 3.0 kernel
 - fixed buildrequires in specfile for Python

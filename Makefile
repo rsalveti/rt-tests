@@ -1,4 +1,4 @@
-VERSION_STRING = 0.74
+VERSION_STRING = 0.83
 
 sources = cyclictest.c signaltest.c pi_stress.c rt-migrate-test.c	\
 	  ptsematest.c sigwaittest.c svsematest.c pmqtest.c sendme.c 	\
@@ -14,6 +14,12 @@ bindir  ?= $(prefix)/bin
 mandir	?= $(prefix)/share/man
 srcdir	?= $(prefix)/src
 
+machinetype = $(shell uname -m | \
+    sed -e 's/i.86/i386/' -e 's/mips.*/mips/' -e 's/ppc.*/powerpc/')
+ifneq ($(filter x86_64 i386 ia64 mips powerpc,$(machinetype)),)
+NUMA 	:= 1
+endif
+
 CFLAGS = -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
 
 PYLIB  := $(shell python -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
@@ -24,7 +30,7 @@ else
 	CFLAGS	+= -O0 -g
 endif
 
-ifdef NUMA
+ifeq ($(NUMA),1)
 	CFLAGS += -DNUMA
 	NUMA_LIBS = -lnuma
 endif

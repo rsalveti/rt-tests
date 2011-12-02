@@ -25,7 +25,7 @@ Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
  DESTDIR	?=
  prefix  ?= /usr/local
  bindir  ?= $(prefix)/bin
-@@ -69,19 +68,19 @@
+@@ -75,19 +74,19 @@
  rt-migrate-test: rt-migrate-test.o
  	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
  
