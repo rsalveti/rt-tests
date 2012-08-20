@@ -1,7 +1,7 @@
 /*
  * High resolution timer test software
  *
- * (C) 2008-2011 Clark Williams <williams@redhat.com>
+ * (C) 2008-2012 Clark Williams <williams@redhat.com>
  * (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <sys/sysinfo.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/utsname.h>
 #include <sys/mman.h>
 #include "rt_numa.h"
@@ -108,6 +109,8 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
 
 int enable_events;
 
+static char *policyname(int policy);
+
 enum {
 	NOTRACE,
 	CTXTSWITCH,
@@ -170,6 +173,7 @@ static int duration = 0;
 static int use_nsecs = 0;
 static int refresh_on_max;
 static int force_sched_other;
+static int priospread = 0;
 
 static pthread_cond_t refresh_on_max_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t refresh_on_max_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -586,6 +590,79 @@ parse_time_string(char *val)
 }
 
 /*
+ * Raise the soft priority limit up to prio, if that is less than or equal
+ * to the hard limit
+ * if a call fails, return the error
+ * if successful return 0
+ * if fails, return -1
+*/
+static int raise_soft_prio(int policy, const struct sched_param *param)
+{
+	int err;
+	int policy_max;	/* max for scheduling policy such as SCHED_FIFO */
+	int soft_max;
+	int hard_max;
+	int prio;
+	struct rlimit rlim;
+
+	prio = param->sched_priority;
+
+	policy_max = sched_get_priority_max(policy);
+	if (policy_max == -1) {
+		err = errno;
+		err_msg("WARN: no such policy\n");
+		return err;
+	}
+
+	err = getrlimit(RLIMIT_RTPRIO, &rlim);
+	if (err) {
+		err = errno;
+		err_msg_n(err, "WARN: getrlimit failed\n");
+		return err;
+	}
+
+	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? policy_max : rlim.rlim_cur;
+	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? policy_max : rlim.rlim_max;
+
+	if (prio > soft_max && prio <= hard_max) {
+		rlim.rlim_cur = prio;
+		err = setrlimit(RLIMIT_RTPRIO, &rlim);
+		if (err) {
+			err = errno;
+			err_msg_n(err, "WARN: setrlimit failed\n");
+			/* return err; */
+		}
+	} else {
+		err = -1;
+	}
+
+	return err;
+}
+
+/*
+ * Check the error status of sched_setscheduler
+ * If an error can be corrected by raising the soft limit priority to
+ * a priority less than or equal to the hard limit, then do so.
+ */
+static int setscheduler(pid_t pid, int policy, const struct sched_param *param)
+{
+	int err = 0;
+
+try_again:
+	err = sched_setscheduler(pid, policy, param);
+	if (err) {
+		err = errno;
+		if (err == EPERM) {
+			int err1;
+			err1 = raise_soft_prio(policy, param);
+			if (!err1) goto try_again;
+		}
+	}
+
+	return err;
+}
+
+/*
  * timer thread
  *
  * Modes:
@@ -610,6 +687,7 @@ void *timerthread(void *param)
 	struct thread_stat *stat = par->stats;
 	int stopped = 0;
 	cpu_set_t mask;
+	pthread_t thread;
 
 	/* if we're running in numa mode, set our memory node */
 	if (par->node != -1)
@@ -618,7 +696,8 @@ void *timerthread(void *param)
 	if (par->cpu != -1) {
 		CPU_ZERO(&mask);
 		CPU_SET(par->cpu, &mask);
-		if(sched_setaffinity(0, sizeof(mask), &mask) == -1)
+		thread = pthread_self();
+		if(pthread_setaffinity_np(thread, sizeof(mask), &mask) == -1)
 			warn("Could not set CPU affinity to CPU #%d\n", par->cpu);
 	}
 
@@ -641,7 +720,8 @@ void *timerthread(void *param)
 
 	memset(&schedp, 0, sizeof(schedp));
 	schedp.sched_priority = par->prio;
-	sched_setscheduler(0, par->policy, &schedp);
+	if (setscheduler(0, par->policy, &schedp)) 
+		fatal("timerthread%d: failed to set priority to %d\n", par->cpu, par->prio);
 
 	/* Get current time */
 	clock_gettime(par->clock, &now);
@@ -692,35 +772,50 @@ void *timerthread(void *param)
 
 		case MODE_CLOCK_NANOSLEEP:
 			if (par->timermode == TIMER_ABSTIME) {
-				ret = clock_nanosleep(par->clock, TIMER_ABSTIME,
-						&next, NULL);
+				if ((ret = clock_nanosleep(par->clock, TIMER_ABSTIME, &next, NULL))) {
+					if (ret != EINTR)
+						warn("clock_nanosleep failed. errno: %d\n", errno);
+					goto out;
+				}
 			} else {
-				clock_gettime(par->clock, &now);
-				ret = clock_nanosleep(par->clock, TIMER_RELTIME,
-						&interval, NULL);
+				if ((ret = clock_gettime(par->clock, &now))) {
+					if (ret != EINTR)
+						warn("clock_gettime() failed: %s", strerror(errno));
+					goto out;
+				}
+				if ((ret = clock_nanosleep(par->clock, TIMER_RELTIME, &interval, NULL))) {
+					if (ret != EINTR)
+						warn("clock_nanosleep() failed. errno: %d\n", errno);
+					goto out;
+				}
 				next.tv_sec = now.tv_sec + interval.tv_sec;
 				next.tv_nsec = now.tv_nsec + interval.tv_nsec;
 				tsnorm(&next);
 			}
-
-			/* Avoid negative calcdiff result if clock_nanosleep() 
-			 * gets interrupted.
-			 */
-			if (ret == EINTR)
-				goto out;
-
 			break;
 
 		case MODE_SYS_NANOSLEEP:
-			clock_gettime(par->clock, &now);
-			nanosleep(&interval, NULL);
+			if ((ret = clock_gettime(par->clock, &now))) {
+				if (ret != EINTR)
+					warn("clock_gettime() failed: errno %d\n", errno);
+				goto out;
+			}
+			if (nanosleep(&interval, NULL)) {
+				if (errno != EINTR)
+					warn("nanosleep failed. errno: %d\n", errno);
+				goto out;
+			}
 			next.tv_sec = now.tv_sec + interval.tv_sec;
 			next.tv_nsec = now.tv_nsec + interval.tv_nsec;
 			tsnorm(&next);
 			break;
 		}
 
-		clock_gettime(par->clock, &now);
+		if ((ret = clock_gettime(par->clock, &now))) {
+			if (ret != EINTR)
+				warn("clock_getttime() failed. errno: %d\n", errno);
+			goto out;
+		}
 
 		if (use_nsecs)
 			diff = calcdiff_ns(now, next);
@@ -749,7 +844,6 @@ void *timerthread(void *param)
 			pthread_mutex_unlock(&break_thread_id_lock);
 		}
 		stat->act = diff;
-		stat->cycles++;
 
 		if (par->bufmsk)
 			stat->values[stat->cycles & par->bufmsk] = diff;
@@ -761,6 +855,8 @@ void *timerthread(void *param)
 			else
 				stat->hist_array[diff]++;
 		}
+
+		stat->cycles++;
 
 		next.tv_sec += interval.tv_sec;
 		next.tv_nsec += interval.tv_nsec;
@@ -845,6 +941,7 @@ static void display_help(int error)
 	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
 	       "-P       --preemptoff      Preempt off tracing (used with -b)\n"
 	       "-q       --quiet           print only a summary on exit\n"
+	       "-Q       --priospread       spread priority levels starting at specified value\n"
 	       "-r       --relative        use relative timer instead of absolute\n"
 	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
 	       "-t       --threads         one thread per available processor\n"
@@ -942,10 +1039,11 @@ static char *policyname(int policy)
 static void process_options (int argc, char *argv[])
 {
 	int error = 0;
+	int option_affinity = 0;
 	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
 
 	for (;;) {
-		int option_index = 0;
+ 		int option_index = 0;
 		/** Options for getopt */
 		static struct option long_options[] = {
 			{"affinity", optional_argument, NULL, 'a'},
@@ -984,18 +1082,18 @@ static void process_options (int argc, char *argv[])
 			{"smp", no_argument, NULL, 'S'},
 			{"numa", no_argument, NULL, 'U'},
 			{"latency", required_argument, NULL, 'e'},
+			{"priospread", no_argument, NULL, 'Q'},
 			{NULL, 0, NULL, 0}
 		};
-		int c = getopt_long(argc, argv, "a::b:Bc:Cd:Efh:H:i:Il:MnNo:O:p:PmqrsSt::uUvD:wWT:y:e:",
+		int c = getopt_long(argc, argv, "a::b:Bc:Cd:Efh:H:i:Il:MnNo:O:p:PmqQrsSt::uUvD:wWT:y:e:",
 				    long_options, &option_index);
 		if (c == -1)
 			break;
 		switch (c) {
 		case 'a':
-			if (smp) {
-				warn("-a ignored due to --smp\n");
+			option_affinity = 1;
+			if (smp || numa)
 				break;
-			}
 			if (optarg != NULL) {
 				affinity = atoi(optarg);
 				setaffinity = AFFINITY_SPECIFIED;
@@ -1045,6 +1143,7 @@ static void process_options (int argc, char *argv[])
 			}
 			break;
 		case 'q': quiet = 1; break;
+		case 'Q': priospread = 1; break;
 		case 'r': timermode = TIMER_RELTIME; break;
 		case 's': use_system = MODE_SYS_OFFSET; break;
 		case 't':
@@ -1084,6 +1183,8 @@ static void process_options (int argc, char *argv[])
 			if (smp)
 				fatal("numa and smp options are mutually exclusive\n");
 #ifdef NUMA
+			if (numa_available() == -1)
+				fatal("NUMA functionality not available!");
 			numa = 1;
 			num_threads = max_cpus;
 			setaffinity = AFFINITY_USEALL;
@@ -1101,6 +1202,14 @@ static void process_options (int argc, char *argv[])
 			break;
 
 		case '?': display_help(0); break;
+		}
+	}
+
+	if (option_affinity) {
+		if (smp) {
+			warn("-a ignored due to --smp\n");
+		} else if (numa) {
+			warn("-a ignored due to --numa\n");
 		}
 	}
 
@@ -1139,6 +1248,12 @@ static void process_options (int argc, char *argv[])
 
 	if (priority < 0 || priority > 99)
 		error = 1;
+
+	if (priospread && priority == 0) {
+		fprintf(stderr, "defaulting realtime priority to %d\n", 
+			num_threads+1);
+		priority = num_threads+1;
+	}
 
 	if (priority && (policy != SCHED_FIFO && policy != SCHED_RR)) {
 		fprintf(stderr, "policy and priority don't match: setting policy to SCHED_FIFO\n");
@@ -1456,7 +1571,7 @@ int main(int argc, char **argv)
 			par->policy = SCHED_OTHER;
 			force_sched_other = 1;
 		}
-		if (priority && !histogram && !smp && !numa)
+		if (priospread)
 			priority--;
 		par->clock = clocksources[clocksel];
 		par->mode = mode;
@@ -1561,7 +1676,7 @@ int main(int argc, char **argv)
 		print_tids(parameters, num_threads);
 		if (break_thread_id) {
 			printf("# Break thread: %d\n", break_thread_id);
-			printf("# Break value: %lu\n", break_thread_value);
+			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
 		}
 	}
 	
@@ -1588,8 +1703,9 @@ int main(int argc, char **argv)
 	if (trace_fd >= 0)
 		close(trace_fd);
 
-	/* turn off all events */
-	event_disable_all();
+	if (enable_events)
+		/* turn off all events */
+		event_disable_all();
 
 	/* turn off the function tracer */
 	fileprefix = procfileprefix;

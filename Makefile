@@ -1,4 +1,4 @@
-VERSION_STRING = 0.83
+VERSION_STRING = 0.84
 
 sources = cyclictest.c signaltest.c pi_stress.c rt-migrate-test.c	\
 	  ptsematest.c sigwaittest.c svsematest.c pmqtest.c sendme.c 	\
@@ -6,7 +6,7 @@ sources = cyclictest.c signaltest.c pi_stress.c rt-migrate-test.c	\
 
 TARGETS = $(sources:.c=)
 
-LIBS 	= -lrt -lpthread
+LIBS 	= -lrt -lpthread -lrttest -L.
 EXTRA_LIBS ?= -ldl	# for get_cpu
 DESTDIR	?=
 prefix  ?= /usr/local
@@ -14,13 +14,14 @@ bindir  ?= $(prefix)/bin
 mandir	?= $(prefix)/share/man
 srcdir	?= $(prefix)/src
 
-machinetype = $(shell uname -m | \
-    sed -e 's/i.86/i386/' -e 's/mips.*/mips/' -e 's/ppc.*/powerpc/')
+machinetype = $(shell $(CC) -dumpmachine | \
+    sed -e 's/-.*//' -e 's/i.86/i386/' -e 's/mips.*/mips/' -e 's/ppc.*/powerpc/')
 ifneq ($(filter x86_64 i386 ia64 mips powerpc,$(machinetype)),)
 NUMA 	:= 1
 endif
 
-CFLAGS = -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
+CFLAGS ?= -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
+LDFLAGS ?=
 
 PYLIB  := $(shell python -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
 
@@ -60,44 +61,47 @@ all: $(TARGETS) hwlatdetect
 # Include dependency files, automatically generate them if needed.
 -include $(sources:.c=.d)
 
-cyclictest: cyclictest.o rt-utils.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(NUMA_LIBS)
+cyclictest: cyclictest.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) $(NUMA_LIBS)
 
-signaltest: signaltest.o rt-utils.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+signaltest: signaltest.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 pi_stress: pi_stress.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 hwlatdetect:  src/hwlatdetect/hwlatdetect.py
 	chmod +x src/hwlatdetect/hwlatdetect.py
 	ln -s src/hwlatdetect/hwlatdetect.py hwlatdetect
 
 rt-migrate-test: rt-migrate-test.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-ptsematest: ptsematest.o rt-utils.o rt-get_cpu.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
+ptsematest: ptsematest.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
 
-sigwaittest: sigwaittest.o rt-utils.o rt-get_cpu.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
+sigwaittest: sigwaittest.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
 
-svsematest: svsematest.o rt-utils.o rt-get_cpu.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
+svsematest: svsematest.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
 
-pmqtest: pmqtest.o rt-utils.o rt-get_cpu.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
+pmqtest: pmqtest.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
 
-sendme: sendme.o rt-utils.o rt-get_cpu.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
+sendme: sendme.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
 
-pip_stress: pip_stress.o error.o rt-utils.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+pip_stress: pip_stress.o librttest.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 hackbench: hackbench.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-CLEANUP  = $(TARGETS) *.o .depend *.*~ *.orig *.rej rt-tests.spec *.d
+librttest.a: rt-utils.o error.o rt-get_cpu.o
+	$(AR) rcs librttest.a rt-utils.o error.o rt-get_cpu.o
+
+CLEANUP  = $(TARGETS) *.o .depend *.*~ *.orig *.rej rt-tests.spec *.d *.a
 CLEANUP += $(if $(wildcard .git), ChangeLog)
 
 .PHONY: clean
@@ -121,6 +125,7 @@ install: all
 	cp $(TARGETS) "$(DESTDIR)$(bindir)"
 	if test -n "$(PYLIB)" ; then \
 		install -D -m 755 src/hwlatdetect/hwlatdetect.py $(DESTDIR)$(PYLIB)/hwlatdetect.py ; \
+		rm -f "$(DESTDIR)$(bindir)/hwlatdetect" ; \
 		ln -s $(PYLIB)/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect" ; \
 	fi
 	install -D -m 644 src/backfire/backfire.c "$(DESTDIR)$(srcdir)/backfire/backfire.c"
