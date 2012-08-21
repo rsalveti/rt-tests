@@ -1,6 +1,6 @@
-rt-tests (0.84-1) UNRELEASED; urgency=low
+rt-tests (0.84-0ubuntu1) quantal; urgency=low
 
-  * New upstream release
+  * New upstream release (LP: #1039352)
   * Update to standards version 3.9.3
   * Porting copyright file to match the machine-readable debian/copyright file
     standard version 1.0
