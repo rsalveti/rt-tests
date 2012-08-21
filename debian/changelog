@@ -1,3 +1,13 @@
+rt-tests (0.84-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * Update to standards version 3.9.3
+  * Porting copyright file to match the machine-readable debian/copyright file
+    standard version 1.0
+  * Refreshing debian/patches based on this release
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@linaro.org>  Mon, 20 Aug 2012 19:08:04 -0300
+
 rt-tests (0.83-1) unstable; urgency=low
 
   * new upstream release

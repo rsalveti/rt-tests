@@ -10,49 +10,34 @@ This fixes a (harmless) build warning
 Forwarded: not-needed
 Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
 ---
- Makefile                 |   11 +++++------
- src/include/rt-get_cpu.h |   19 +------------------
- src/lib/rt-get_cpu.c     |   27 ---------------------------
- 3 files changed, 6 insertions(+), 51 deletions(-)
-
+diff --git a/Makefile b/Makefile
+index 3a82407..e7e2666 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -7,7 +7,6 @@
+@@ -7,7 +7,6 @@ sources = cyclictest.c signaltest.c pi_stress.c rt-migrate-test.c	\
  TARGETS = $(sources:.c=)
  
- LIBS 	= -lrt -lpthread
+ LIBS 	= -lrt -lpthread -lrttest -L.
 -EXTRA_LIBS ?= -ldl	# for get_cpu
  DESTDIR	?=
  prefix  ?= /usr/local
  bindir  ?= $(prefix)/bin
-@@ -75,19 +74,19 @@
- rt-migrate-test: rt-migrate-test.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+@@ -98,8 +97,8 @@ pip_stress: pip_stress.o librttest.a
+ hackbench: hackbench.o
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
  
--ptsematest: ptsematest.o rt-utils.o rt-get_cpu.o
-+ptsematest: ptsematest.o rt-utils.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
+-librttest.a: rt-utils.o error.o rt-get_cpu.o
+-	$(AR) rcs librttest.a rt-utils.o error.o rt-get_cpu.o
++librttest.a: rt-utils.o error.o
++	$(AR) rcs librttest.a rt-utils.o error.o
  
--sigwaittest: sigwaittest.o rt-utils.o rt-get_cpu.o
-+sigwaittest: sigwaittest.o rt-utils.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
- 
--svsematest: svsematest.o rt-utils.o rt-get_cpu.o
-+svsematest: svsematest.o rt-utils.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
- 
--pmqtest: pmqtest.o rt-utils.o rt-get_cpu.o
-+pmqtest: pmqtest.o rt-utils.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
- 
--sendme: sendme.o rt-utils.o rt-get_cpu.o
-+sendme: sendme.o rt-utils.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
- 
- pip_stress: pip_stress.o error.o rt-utils.o
+ CLEANUP  = $(TARGETS) *.o .depend *.*~ *.orig *.rej rt-tests.spec *.d *.a
+ CLEANUP += $(if $(wildcard .git), ChangeLog)
+diff --git a/src/include/rt-get_cpu.h b/src/include/rt-get_cpu.h
+index 15d05fc..ceb0f3a 100644
 --- a/src/include/rt-get_cpu.h
 +++ b/src/include/rt-get_cpu.h
-@@ -19,27 +19,10 @@
+@@ -19,27 +19,10 @@ static inline int get_cpu(void)
          s = syscall(__NR_getcpu, &c, NULL, NULL);
          return (s == -1) ? s : c;
  }
@@ -81,6 +66,9 @@ Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
  #endif
  
  #endif	/* __RT_GET_CPU_H */
+diff --git a/src/lib/rt-get_cpu.c b/src/lib/rt-get_cpu.c
+deleted file mode 100644
+index 83430dd..0000000
 --- a/src/lib/rt-get_cpu.c
 +++ /dev/null
 @@ -1,27 +0,0 @@

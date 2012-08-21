@@ -1,99 +1,148 @@
-Name: rt-tests
-Maintainer: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
-Source: http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests/
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: rt test utils
+Upstream-Contact: Clark Williams <williams@redhat.com>
+Source: http://git.kernel.org/?p=linux/kernel/git/clrkwllms/rt-tests.git;a=summary
 
 Files: debian/*
-Copyright: (C) 2009, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+Copyright: 2009, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
 License: GPL-2
 
 Files: scripts/*
-Copyright: (C) 2009 Clark Williams <williams@redhat.com>
+Copyright: 2009, Clark Williams <williams@redhat.com>
 License: GPL-2
 
-Files: src/backfire/backfire.c
-Copyright: (C) 2007  Carsten Emde <C.Emde@osadl.org>
-License: GPL-2+
-
-Files: src/backfire/sendme.c
-Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+Files: src/backfire/backfire.c src/backfire/sendme.c
+Copyright: 2007-2009, Carsten Emde <C.Emde@osadl.org>
 License: GPL-2+
 
 Files: src/cyclictest/cyclictest.c
-Copyright: (C) 2008-2011 Clark Williams <williams@redhat.com>
-	   (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
+Copyright: 2008-2011, Clark Williams <williams@redhat.com>
+           2005-2007, Thomas Gleixner <tglx@linutronix.de>
 License: GPL-2
 
 Files: src/cyclictest/rt_numa.h
-Copyright: (C) 2010 John Kacur <jkacur@redhat.com>
-	   (C) 2010 Clark Williams <williams@redhat.com>
-Licence: GPL-2
+Copyright: 2010, John Kacur <jkacur@redhat.com>
+           2010, Clark Williams <williams@redhat.com>
+License: GPL-2
 
 Files: src/hackbench/hackbench.c
-Copyright: Rusty Russell
-	   2008 International Business Machines Corp.
-	   Arjan van de Ven
-	   Ingo Molnar
-	   Pierre Peiffer
-	   Yanmin Zhang
+Copyright: 2008, International Business Machines Corp.
+           Rusty Russell
+           Arjan van de Ven
+           Ingo Molnar
+           Pierre Peiffer
+           Yanmin Zhang
 License: GPL-2+
 
 Files: src/hwlatdetect/hwlatdetect.py
-Copyright: (C) 2009 Clark Williams <williams@redhat.com>
+Copyright: 2009, Clark Williams <williams@redhat.com>
 License: GPL-2
 
-Files: src/lib/error.c
-Files: src/lib/rt-get_cpu.c
-Copyright: (C) 2009 John Kacur <jkacur@redhat.com>
-Licence: GPL-2
+Files: src/lib/error.c src/lib/rt-get_cpu.c
+Copyright: 2009, John Kacur <jkacur@redhat.com>
+License: GPL-2
 
 Files: src/lib/rt-utils.c
-Copyright: (C) 2009 Carsten Emde <carsten.emde@osadl.org>
-	   (C) 2008-2010 Clark Williams <williams@redhat.com>
-	   (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
-Licence: GPL-2
-
-Files: src/pmqtest/pmqtest.c
-Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
-Licence: GPL-2+
+Copyright: 2008-2010, Clark Williams <williams@redhat.com>
+           2009, Carsten Emde <carsten.emde@osadl.org>
+           2005-2007, Thomas Gleixner <tglx@linutronix.de>
+License: GPL-2
 
 Files: src/pi_tests/pip_stress.c
-Copyright: (C) 2009 John Kacur <jkacur@redhat.com>
-Licence: GPL-2+
+Copyright: 2009, John Kacur <jkacur@redhat.com>
+License: GPL-2+
 
-Files: src/pi_tests/pi_stress.c
-Files: src/pi_tests/classic_pi.c
-Files: src/pi_tests/sigtest.c
-Copyright: (C) 2006, 2007 Clark Williams <williams@redhat.com>
+Files: src/pi_tests/pi_stress.c src/pi_tests/classic_pi.c src/pi_tests/sigtest.c
+Copyright: 2006-2007, Clark Williams <williams@redhat.com>
 License: GPL-2+
 
 Files: src/pi_tests/tst-mutexpi10.c
-Copyright: (C) 2006 Free Software Foundation, Inc.
+Copyright: 2006, Free Software Foundation, Inc.
 License: LGPL-2.1+
 
+Files: src/pmqtest/pmqtest.c
+Copyright: 2009, Carsten Emde <C.Emde@osadl.org>
+License: GPL-2+
+
 Files: src/ptsematest/ptsematest.c
-Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+Copyright: 2009, Carsten Emde <C.Emde@osadl.org>
 License: GPL-2+
 
 Files: src/rt-migrate-test/rt-migrate-test.c
-Copyright: (C) 2007-2009 Steven Rostedt <srostedt@redhat.com>
+Copyright: 2007-2009, Steven Rostedt <srostedt@redhat.com>
 License: GPL-2
 
 Files: src/signaltest/signaltest.c
-Copyright: (C) 2007 Thomas Gleixner <tglx@linutronix.de>
+Copyright: 2007, Thomas Gleixner <tglx@linutronix.de>
 License: GPL-2
 
 Files: src/sigwaittest/sigwaittest.c
-Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+Copyright: 2009, Carsten Emde <C.Emde@osadl.org>
 License: GPL-2+
 
 Files: src/svsematest/svsematest.c
-Copyright: (C) 2009 Carsten Emde <C.Emde@osadl.org>
+Copyright: 2009, Carsten Emde <C.Emde@osadl.org>
 License: GPL-2+
 
 License: GPL-2
-  The full text of the GPL can be found in /usr/share/common-licenses/GPL-2 on
-  Debian systems.
+ This program is free software; you can redistribute it
+ and/or modify it under the terms of the GNU General Public
+ License 2 as published by the Free Software Foundation.
+ .
+ This program is distributed in the hope that it will be
+ useful, but WITHOUT ANY WARRANTY; without even the implied
+ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ PURPOSE.  See the GNU General Public License for more
+ details.
+ .
+ You should have received a copy of the GNU General Public
+ License along with this package; if not, write to the Free
+ Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ Boston, MA  02110-1301 USA
+ .
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/GPL-2'.
+
+License: GPL-2+
+ This program is free software; you can redistribute it
+ and/or modify it under the terms of the GNU General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later
+ version.
+ .
+ This program is distributed in the hope that it will be
+ useful, but WITHOUT ANY WARRANTY; without even the implied
+ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ PURPOSE.  See the GNU General Public License for more
+ details.
+ .
+ You should have received a copy of the GNU General Public
+ License along with this package; if not, write to the Free
+ Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ Boston, MA  02110-1301 USA
+ .
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/GPL-2'.
 
 License: LGPL-2.1+
-  The full test of the LGPL can be found in /usr/share/common-licenses/LGPL-2.1
-  on Debian systems.
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ .
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free
+ Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA  02110-1301  USA
+ .
+ On Debian systems, the full text of the GNU Lesser General Public
+ License version 2.1 can be found in the file
+ `/usr/share/common-licenses/LGPL-2.1'.
+
