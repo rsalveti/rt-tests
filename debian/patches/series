@@ -4,3 +4,4 @@ manpage_pip_stress.patch
 debian_has_recent_glibc.patch
 fix_comment_about_realtime_group.patch
 backfire-fix-build-failure-for-modern-kernels.patch
+adding-missing-manpages.patch

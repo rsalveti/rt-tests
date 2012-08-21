@@ -1,0 +1,114 @@
+From: Ricardo Salveti de Araujo <ricardo.salveti@linaro.org>
+Subject: Adding missing manpages (signaltest and rt-migrate-test)
+
+To satisfy lintian.
+
+Signed-off-by: Ricardo Salveti de Araujo <ricardo.salveti@linaro.org>
+---
+ Makefile                              |    2 ++
+ src/rt-migrate-test/rt-migrate-test.8 |   33 +++++++++++++++++++++++++++++
+ src/signaltest/signaltest.8           |   37 +++++++++++++++++++++++++++++++++
+ 3 files changed, 72 insertions(+)
+ create mode 100644 src/rt-migrate-test/rt-migrate-test.8
+ create mode 100644 src/signaltest/signaltest.8
+
+diff --git a/Makefile b/Makefile
+index 3a82407..af92041 100644
+--- a/Makefile
++++ b/Makefile
+@@ -130,8 +130,10 @@ install: all
+ 	gzip src/pi_tests/pip_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pip_stress.8.gz"
+ 	gzip src/hwlatdetect/hwlatdetect.8 -c >"$(DESTDIR)$(mandir)/man8/hwlatdetect.8.gz"
+ 	gzip src/ptsematest/ptsematest.8 -c >"$(DESTDIR)$(mandir)/man8/ptsematest.8.gz"
++	gzip src/signaltest/signaltest.8 -c >"$(DESTDIR)$(mandir)/man8/signaltest.8.gz"
+ 	gzip src/sigwaittest/sigwaittest.8 -c >"$(DESTDIR)$(mandir)/man8/sigwaittest.8.gz"
+ 	gzip src/svsematest/svsematest.8 -c >"$(DESTDIR)$(mandir)/man8/svsematest.8.gz"
++	gzip src/rt-migrate-test/rt-migrate-test.8 -c >"$(DESTDIR)$(mandir)/man8/rt-migrate-test.8.gz"
+ 	gzip src/pmqtest/pmqtest.8 -c >"$(DESTDIR)$(mandir)/man8/pmqtest.8.gz"
+ 	gzip src/backfire/sendme.8 -c >"$(DESTDIR)$(mandir)/man8/sendme.8.gz"
+ 	gzip src/hackbench/hackbench.8 -c >"$(DESTDIR)$(mandir)/man8/hackbench.8.gz"
+diff --git a/src/rt-migrate-test/rt-migrate-test.8 b/src/rt-migrate-test/rt-migrate-test.8
+new file mode 100644
+index 0000000..a806790
+--- /dev/null
++++ b/src/rt-migrate-test/rt-migrate-test.8
+@@ -0,0 +1,33 @@
++.TH "RT-MIGRATE-TEST" 8 "August 20, 2012"
++.SH "NAME"
++.LP
++\fBrt-migrate-test\fR \- Test to verify the RT threads scheduler balancing
++.SH "SYNTAX"
++.LP
++rt-migrate-test [-c|--check] [-l LOOPS] [-m TIME] [-s TIME] [-r TIME] [-p PRIO] nr_tasks
++.br
++.SH "OPTIONS"
++.TP
++.B \-c, \-\-check
++Check and stop the test run in case a lower priority task is quicker than a higher one (default is off).
++.TP
++.B \-l, \-\-loops=LOOPS
++Set the number of interations to run (default is 50).
++.TP
++.B \-m, \-\-maxerr=TIME
++Set the max allowed error (microsecs).
++.TP
++.B \-s, \-\-sleep-time=TIME
++Set the sleep time (ms) between intervals (default is 100).
++.TP
++.B \-r, \-\-run-time=TIME
++Set the run time (ms) to busy loop the threads (default is 20).
++.TP
++.B \-p, \-\-prio=PRIO
++Set the base priority to start RT tasks with (default is 2).
++.SH "AUTHORS"
++.LP
++rt-migrate-test was written by Steven Rostedt <srostedt@redhat.com>.
++.PP
++This manual page was written by Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>,
++for the Debian project (and may be used by others).
+diff --git a/src/signaltest/signaltest.8 b/src/signaltest/signaltest.8
+new file mode 100644
+index 0000000..9a427f5
+--- /dev/null
++++ b/src/signaltest/signaltest.8
+@@ -0,0 +1,37 @@
++.TH "SIGNALTEST" 8 "August 20, 2012"
++.SH "NAME"
++.LP
++\fBsignaltest\fR \- RT signal roundtrip test software
++.SH "SYNTAX"
++.LP
++signaltest [-b USEC] [-l loops] [-p PRIO] [-q|--quiet] [-t NUM] [-m|--mlockall] [-v|--verbose]
++.br
++.SH "OPTIONS"
++.TP
++.B \-b, \-\-breaktrace=USEC
++Send break trace command when latency > USEC. This is a debugging option to control the latency tracer in the realtime preemption patch.
++It is useful to track down unexpected large latencies on a system.
++.TP
++.B \-l, \-\-loops=LOOPS
++Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. signaltest is stopped once the number of timer intervals has been reached.
++.TP
++.B \-p, \-\-prio=PRIO
++Set the priority of the process.
++.TP
++.B \-q, \-\-quiet
++Only print only the summary on exit.
++.TP
++.B \-t, \-\-threads=NUM
++Numer of threads to use (defaults=2).
++.TP
++.B \-m, \-\-mlockall
++Lock current and future memory allocations.
++.TP
++.B \-v, \-\-verbose
++Output values on stdout for statistics, with format: n:c:v n=tasknum c=count v=value in us
++.SH "AUTHORS"
++.LP
++signaltest was written by Thomas Gleixner <tglx@linutronix.de>.
++.PP
++This manual page was written by Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>,
++for the Debian project (and may be used by others).
+-- 
+1.7.9.5
+

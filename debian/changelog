@@ -5,6 +5,8 @@ rt-tests (0.84-1) UNRELEASED; urgency=low
   * Porting copyright file to match the machine-readable debian/copyright file
     standard version 1.0
   * Refreshing debian/patches based on this release
+  * debian/patches/adding-missing-manpages.patch:
+    - Adding missing manpages for signaltest and rt-migrate-test
 
  -- Ricardo Salveti de Araujo <ricardo.salveti@linaro.org>  Mon, 20 Aug 2012 19:08:04 -0300
 
